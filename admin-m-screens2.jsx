@@ -73,7 +73,7 @@ function UploadSheet({ open, onClose, toast }) {
 }
 
 /* ───────── PLANTA (form/detail) ───────── */
-function MPlantaForm({ planta, pop, toast }) {
+function MPlantaForm({ planta, pop, toast, push }) {
   const p = planta;
   const [name, setName] = React.useState(p.name);
   const [version, setVersion] = React.useState(p.version);
@@ -85,6 +85,11 @@ function MPlantaForm({ planta, pop, toast }) {
   const save = () => { toast('Planta atualizada.'); pop(); };
   const genMarker = () => { setMarker({ family: 'tag36h11', code: window.nextTagCode(), size: '16,0', location: '' }); toast('Marcador gerado.'); };
   const setLoc = (v) => setMarker(m => ({ ...m, location: v }));
+  const viewAR = () => push({
+    key: 'camera', typeId: p.disc,
+    plant: { ...p, name, tag: marker ? `${marker.family} · id ${marker.code}` : 'tag36h11',
+      file: `${p.imovel}_${p.disc}_${p.kind}.${p.format.toLowerCase()}` },
+  });
   return (
     <window.Page large={false} title="Planta" onBack={{ label: 'Voltar', fn: pop }}
       right={<button className="tap" onClick={save} style={{ background: 'none', border: 0, color: 'var(--orange-600)', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>Salvar</button>}>
@@ -97,6 +102,10 @@ function MPlantaForm({ planta, pop, toast }) {
           </div>
         </div>
       </div>
+      <window.Group>
+        <window.Row icon={<window.MIc.scan s={18} />} iconBg="var(--orange-100)" iconColor="var(--orange-600)"
+          title="Visualizar em AR" sub="Abrir câmera e ancorar o modelo pelo marcador" last onClick={viewAR} />
+      </window.Group>
       <window.Group header="Modelo">
         <window.FInput label="Nome" value={name} onChange={setName} />
         <window.FInput label="Versão" value={version} onChange={setVersion} />

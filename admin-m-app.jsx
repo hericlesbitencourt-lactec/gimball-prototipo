@@ -32,9 +32,10 @@ function AdminMobileApp() {
   const fireToast = (msg) => { setToast(msg); clearTimeout(fireToast._t); fireToast._t = setTimeout(() => setToast(null), 2000); };
   const top = stack[stack.length - 1];
   const atRoot = stack.length === 1;
-  const dark = false;
+  const dark = ['camera', 'arview'].includes(top.key);
 
   const push = (s) => { if (busy.current) return; setStack(st => [...st, s]); };
+  const replace = (s) => { setStack(st => [...st.slice(0, -1), s]); };
   const pop = () => {
     if (busy.current || stack.length <= 1) return;
     busy.current = true; setLeaving(top); setStack(s => s.slice(0, -1));
@@ -64,6 +65,9 @@ function AdminMobileApp() {
       case 'plantaForm': return <window.MPlantaForm planta={s.planta} {...P} />;
       case 'permList': return <window.MPermList {...P} />;
       case 'permRole': return <window.MPermRole role={s.role} {...P} />;
+      case 'camera': return <window.CameraScreen plant={s.plant} typeId={s.typeId} forceState={null}
+        onBack={pop} onAnchored={() => replace({ key: 'arview', plant: s.plant, typeId: s.typeId })} />;
+      case 'arview': return <window.ARViewScreen plant={s.plant} typeId={s.typeId} onBack={pop} onExit={pop} />;
       default: return null;
     }
   };

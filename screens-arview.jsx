@@ -36,23 +36,7 @@ function ModelOverlay({ typeId, color }) {
 
 function ARViewScreen({ plant, propId, typeId, onExit, onBack }) {
   const t = window.projType(typeId);
-  const [visible, setVisible] = React.useState(true);
-  const [opacity, setOpacity] = React.useState(1);
-  const [panel, setPanel] = React.useState(null); // 'transp' | null
-  const [hint, setHint] = React.useState(false);
-  const [toast, setToast] = React.useState(null);
   const modelColor = { hidro: '#5BB6E8', eletr: '#F0BE54', estru: '#CBD6E4' }[typeId];
-
-  const ping = (msg) => { setToast(msg); setTimeout(() => setToast(null), 1700); };
-  const reposition = () => { setHint(true); setPanel(null); setTimeout(() => setHint(false), 1800); };
-  const reset = () => { setVisible(true); setOpacity(1); setPanel(null); ping('Visualização reiniciada'); };
-
-  const ctrls = [
-    { id: 'repos', label: 'Reposicionar', icon: <window.IcMove s={22} />, on: reposition },
-    { id: 'vis', label: visible ? 'Ocultar' : 'Mostrar', icon: visible ? <window.IcEyeOff s={22} /> : <window.IcEye s={22} />, on: () => setVisible(v => !v), active: !visible },
-    { id: 'transp', label: 'Transparência', icon: <window.IcOpacity s={22} />, on: () => setPanel(p => p === 'transp' ? null : 'transp'), active: panel === 'transp' },
-    { id: 'reset', label: 'Resetar', icon: <window.IcReset s={22} />, on: reset },
-  ];
 
   return (
     <div style={{ position: 'relative', height: '100%', overflow: 'hidden', background: '#0a121c' }}>
@@ -60,8 +44,7 @@ function ARViewScreen({ plant, propId, typeId, onExit, onBack }) {
 
       {/* anchored model */}
       <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', paddingBottom: 40 }}>
-        <div style={{ position: 'relative', display: 'grid', placeItems: 'center',
-          opacity: visible ? opacity : 0, transition: 'opacity .35s' }}>
+        <div style={{ position: 'relative', display: 'grid', placeItems: 'center' }}>
           {/* floor anchor shadow */}
           <div style={{ position: 'absolute', bottom: -26, width: 150, height: 26, borderRadius: '50%',
             background: 'radial-gradient(closest-side, rgba(0,0,0,.5), transparent)' }} />
@@ -73,14 +56,6 @@ function ARViewScreen({ plant, propId, typeId, onExit, onBack }) {
             background: `linear-gradient(${modelColor},transparent)`, transform: 'translateX(-50%)' }} />
           <window.AprilTag size={30} locked />
         </div>
-
-        {hint && (
-          <div style={{ position: 'absolute', bottom: 150, background: 'rgba(11,18,28,.82)', color: '#fff',
-            padding: '10px 16px', borderRadius: 999, fontSize: 13, fontWeight: 600, animation: 'popIn .25s both',
-            border: '1px solid rgba(255,255,255,.16)', display: 'flex', gap: 8, alignItems: 'center' }}>
-            <window.IcMove s={17} /> Toque e arraste para reposicionar
-          </div>
-        )}
       </div>
 
       {/* top: title + anchored status */}
@@ -105,35 +80,11 @@ function ARViewScreen({ plant, propId, typeId, onExit, onBack }) {
         </div>
       </div>
 
-      {/* transparency slider panel */}
-      {panel === 'transp' && (
-        <div style={{ position: 'absolute', left: 18, right: 18, bottom: 134, zIndex: 45,
-          background: 'rgba(11,18,28,.82)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-          border: '1px solid rgba(255,255,255,.14)', borderRadius: 18, padding: '14px 16px', color: '#fff',
-          animation: 'toastIn .25s both' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 650, marginBottom: 10 }}>
-            <span>Transparência do modelo</span><span className="mono">{Math.round((1 - opacity) * 100)}%</span>
-          </div>
-          <input type="range" min="0.15" max="1" step="0.01" value={opacity}
-            onChange={e => { setOpacity(parseFloat(e.target.value)); if (!visible) setVisible(true); }}
-            style={{ width: '100%', accentColor: modelColor }} />
-        </div>
-      )}
-
       {/* control bar */}
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 40, padding: '0 14px 38px' }}>
         <div style={{ display: 'flex', gap: 7, alignItems: 'stretch',
           background: 'rgba(11,18,28,.72)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
           border: '1px solid rgba(255,255,255,.12)', borderRadius: 22, padding: 8 }}>
-          {ctrls.map(c => (
-            <button key={c.id} className="tap" onClick={c.on} style={{ flex: 1, border: 0, cursor: 'pointer',
-              background: c.active ? 'rgba(232,132,58,.22)' : 'transparent', borderRadius: 15, padding: '10px 4px',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-              color: c.active ? 'var(--orange)' : 'rgba(255,255,255,.86)' }}>
-              {c.icon}
-              <span style={{ fontSize: 10.5, fontWeight: 600, letterSpacing: '-.01em' }}>{c.label}</span>
-            </button>
-          ))}
           <button className="tap" onClick={onExit} style={{ flex: 1, border: 0, cursor: 'pointer',
             background: 'rgba(210,80,60,.18)', borderRadius: 15, padding: '10px 4px',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, color: '#ff9385' }}>
@@ -142,8 +93,6 @@ function ARViewScreen({ plant, propId, typeId, onExit, onBack }) {
           </button>
         </div>
       </div>
-
-      {toast && <window.Toast tone="ok">{toast}</window.Toast>}
     </div>
   );
 }
