@@ -1,4 +1,4 @@
-// admin-m-app.jsx — tab nav-stack (login único fica no app do morador — index.html)
+// admin-m-app.jsx - tab nav-stack (login único fica no app do morador - index.html)
 
 const { useState: aS, useEffect: aE, useRef: aR } = React;
 const TAB_ROOTS = { inicio: 'inicio', imoveis: 'imoveis', plantas: 'plantas', mais: 'mais' };

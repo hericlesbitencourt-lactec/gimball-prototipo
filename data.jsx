@@ -1,4 +1,4 @@
-// data.jsx — mock domain data for the Gimball AR prototype (fluxo morador)
+// data.jsx - mock domain data for the Gimball AR prototype (fluxo morador)
 
 const USER = { name: 'Marina Alves', first: 'Marina', role: 'Morador', initials: 'MA' };
 
@@ -14,19 +14,19 @@ const projType = (id) => PROJ_TYPES.find(p => p.id === id);
 const PROPERTIES = [
   {
     id: 'aurora', name: 'Residencial Aurora', unit: 'Torre B · Apto 1204',
-    address: 'Av. Sete de Setembro, 3400 — Batel, Curitiba/PR',
+    address: 'Av. Sete de Setembro, 3400, Batel, Curitiba/PR',
     status: 'entregue', area: '92 m²', delivered: 'mar/2024', cover: '#1d3a5f',
     counts: { hidro: 2, eletr: 2, estru: 2 },
   },
   {
     id: 'patio', name: 'Edifício Pátio Cabral', unit: 'Unidade 802',
-    address: 'R. Mateus Leme, 1820 — São Lourenço, Curitiba/PR',
+    address: 'R. Mateus Leme, 1820, São Lourenço, Curitiba/PR',
     status: 'obra', area: '74 m²', delivered: 'previsto dez/2026', cover: '#27506e',
     counts: { hidro: 2, eletr: 1, estru: 2 },
   },
   {
     id: 'vista', name: 'Condomínio Vista Verde', unit: 'Casa 14',
-    address: 'Al. Pres. Taunay, 920 — Bigorrilho, Curitiba/PR',
+    address: 'Al. Pres. Taunay, 920, Bigorrilho, Curitiba/PR',
     status: 'entregue', area: '138 m²', delivered: 'ago/2023', cover: '#21405c',
     counts: { hidro: 2, eletr: 2, estru: 1 },
   },
@@ -59,13 +59,13 @@ function plantsFor(propId, typeId) {
   const base = [
     {
       id: `${propId}-${typeId}-ab`, kind: 'asbuilt', status: 'disponivel',
-      name: `${projType(typeId).name} — Pavimento tipo`,
+      name: `${projType(typeId).name} · Pavimento tipo`,
       file: `${propId}_${typeId}_asbuilt.usdz`, size: '18,4 MB',
       updated: seedDate, tag: `tag36h11 · id ${tagBase}`, tagSize: '16 cm',
     },
     {
       id: `${propId}-${typeId}-pr`, kind: 'proj', status: 'disponivel', locked: true,
-      name: `${projType(typeId).name} — Projeto executivo`,
+      name: `${projType(typeId).name} · Projeto executivo`,
       file: `${propId}_${typeId}_proj.usdz`, size: '15,1 MB',
       updated: seedDate, tag: `tag36h11 · id ${tagBase + 1}`, tagSize: '16 cm',
     },

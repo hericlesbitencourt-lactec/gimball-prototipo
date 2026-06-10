@@ -1,9 +1,9 @@
-// admin-m-screens.jsx — Início · Usuários · Imóveis (mobile)
+// admin-m-screens.jsx - Início · Usuários · Imóveis (mobile)
 
 const { useState: mState } = React;
 
 /* helper: scrollable screen with condensing large-title nav
-   NOTE: children must NOT be wrapped in a transform-animated element —
+   NOTE: children must NOT be wrapped in a transform-animated element:
    sheets/pickers inside are position:absolute and a transform creates a
    containing block that misplaces/clips them. */
 function Page({ title, sub, onBack, right, children, large = true, bottomPad = 96 }) {
@@ -20,7 +20,7 @@ function Page({ title, sub, onBack, right, children, large = true, bottomPad = 9
 /* ───────── INÍCIO ───────── */
 function MInicio({ go, push }) {
   return (
-    <Page title="Início" sub="Construtora Gimball">
+    <Page title="Início" sub="Construtora Teste">
       <div style={{ padding: '4px 16px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 11, marginBottom: 22 }}>
         <window.Tile label="Usuários" value="134" sub="128 moradores" icon={<window.MIc.users s={18} />} tint="#7A4FB0" bg="#EFE8F8" />
         <window.Tile label="Imóveis" value="166" sub="5 com plantas" icon={<window.MIc.home s={18} />} tint="var(--orange)" bg="var(--orange-100)" />
@@ -109,7 +109,7 @@ function MUserForm({ user, pop, toast }) {
       </window.Group>
 
       {role === 'morador' && (
-        <window.Group header={`Imóveis vinculados (${linked.length})`} footer="Use a busca para encontrar a unidade — a base pode ter milhares de imóveis.">
+        <window.Group header={`Imóveis vinculados (${linked.length})`} footer="Use a busca para encontrar a unidade; a base pode ter milhares de imóveis.">
           {linked.map(id => {
             const im = window.ADM_IMOVEIS.find(i => i.id === id);
             if (!im) return null;
@@ -159,7 +159,7 @@ function LinkImovelSheet({ open, onClose, linked, onAdd }) {
           <div style={{ fontSize: 12.5, marginTop: 4, lineHeight: 1.45 }}>Informe ao menos 2 caracteres da unidade ou do empreendimento.</div>
         </div>
       ) : results.length ? (
-        <window.Group footer={results.length === 20 ? 'Mostrando os 20 primeiros resultados — refine a busca.' : null}>
+        <window.Group footer={results.length === 20 ? 'Mostrando os 20 primeiros resultados. Refine a busca.' : null}>
           {results.map((im, i) => (
             <window.Row key={im.id} last={i === results.length - 1} onClick={() => onAdd(im.id)}
               icon={<window.MIc.home s={18} />} title={im.identifier} sub={window.empName(im.emp)}

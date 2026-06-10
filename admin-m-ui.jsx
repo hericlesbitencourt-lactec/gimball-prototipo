@@ -1,4 +1,4 @@
-// admin-m-ui.jsx — iOS primitives for the Gimball admin (mobile)
+// admin-m-ui.jsx - iOS primitives for the Gimball admin (mobile)
 
 /* ── admin-only icons (reuse window.Ic* from icons.jsx for the rest) ── */
 function MSvg({ s = 24, w = 1.8, children }) {

@@ -1,9 +1,9 @@
-// admin-m-more.jsx — Mais (menu) · Permissões · Banco de dados (mobile)
+// admin-m-more.jsx - Mais (menu) · Permissões · Banco de dados (mobile)
 
 /* ───────── MAIS (menu) ───────── */
 function MMais({ push, toast }) {
   return (
-    <window.Page title="Mais" sub="Construtora Gimball">
+    <window.Page title="Mais" sub="Construtora Teste">
       <window.Group header="Conta">
         <window.Row left={<window.MAvatar initials="CB" role="admin" size={42} />} title="Carla Bittencourt" sub="carla.admin@gimball.com.br · Administrador" chevron last onClick={() => toast('Perfil do administrador.')} />
       </window.Group>
@@ -15,7 +15,7 @@ function MMais({ push, toast }) {
       </window.Group>
 
       <window.Group header="Sistema">
-        <window.Row icon={<window.MIc.shield s={18} />} iconBg="var(--amber-100)" iconColor="var(--amber)" title="Permissões" sub="Papéis e acessos" chevron last onClick={() => push({ key: 'permList' })} />
+        <window.Row icon={<window.MIc.shield s={18} />} iconBg="var(--amber-100)" iconColor="var(--amber)" title="Permissões" sub="Grupos e acessos" chevron last onClick={() => push({ key: 'permList' })} />
       </window.Group>
 
       <window.Group>
@@ -31,7 +31,7 @@ function MMais({ push, toast }) {
 /* ───────── PERMISSÕES (roles list) ───────── */
 function MPermList({ push, pop }) {
   return (
-    <window.Page title="Permissões" sub="Papéis de acesso" onBack={{ label: 'Mais', fn: pop }}>
+    <window.Page title="Permissões" sub="Grupos de acesso" onBack={{ label: 'Mais', fn: pop }}>
       <window.Group footer="Toque num papel para ver e ajustar exatamente o que ele pode fazer no sistema.">
         {window.ADM_ROLES.map((r, i) => {
           const m = window.ROLE_BADGE[r.slug];
@@ -78,7 +78,7 @@ function MPermRole({ role, pop, toast }) {
       </div>
       {isAdmin && (
         <div style={{ margin: '0 16px 18px', display: 'flex', gap: 10, alignItems: 'center', padding: '12px 14px', background: '#EFE8F8', borderRadius: 14, color: '#7A4FB0' }}>
-          <window.MIc.shield s={20} /><div style={{ fontSize: 12.5, lineHeight: 1.4, fontWeight: 600 }}>O Administrador tem acesso total — as permissões não podem ser desativadas.</div>
+          <window.MIc.shield s={20} /><div style={{ fontSize: 12.5, lineHeight: 1.4, fontWeight: 600 }}>O Administrador tem acesso total; as permissões não podem ser desativadas.</div>
         </div>
       )}
       {window.PERM_MODULES.map(mod => (

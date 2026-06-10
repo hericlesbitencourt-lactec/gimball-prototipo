@@ -1,4 +1,4 @@
-// ui.jsx — reusable building blocks for the Gimball AR prototype
+// ui.jsx - reusable building blocks for the Gimball AR prototype
 
 /* Gimball wordmark (mini) */
 function GMark({ size = 22, light = false }) {
@@ -10,7 +10,7 @@ function GMark({ size = 22, light = false }) {
   );
 }
 
-/* Button — variants: primary | dark | ghost | soft | danger */
+/* Button - variants: primary | dark | ghost | soft | danger */
 function Btn({ children, variant = 'primary', block, disabled, onClick, icon, style = {}, size = 'md' }) {
   const pad = size === 'lg' ? '16px 22px' : size === 'sm' ? '9px 14px' : '13px 18px';
   const fs = size === 'lg' ? 16.5 : size === 'sm' ? 13.5 : 15.5;

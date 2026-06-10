@@ -1,4 +1,4 @@
-// admin-m-screens2.jsx — Plantas + marcador · Empreendimentos · Construtoras (mobile)
+// admin-m-screens2.jsx - Plantas + marcador · Empreendimentos · Construtoras (mobile)
 
 /* faux AprilTag glyph */
 function TagGlyph({ size = 34 }) {
@@ -64,7 +64,7 @@ function UploadSheet({ open, onClose, toast }) {
         <window.FSelect label="Tipo" display={kind === 'asbuilt' ? 'Como foi construído' : 'Projetado'} onClick={() => setPick('kind')} last />
       </window.Group>
     </window.Sheet>
-    {/* pickers como irmãos do sheet — nunca cortados pelo scroll interno */}
+    {/* pickers como irmãos do sheet: nunca cortados pelo scroll interno */}
     <window.Picker open={pick === 'imovel'} onClose={() => setPick(null)} title="Imóvel" value={imovel} onPick={setImovel} options={window.ADM_IMOVEIS.map(i => ({ v: i.id, l: i.identifier, sub: window.empName(i.emp) }))} />
     <window.Picker open={pick === 'disc'} onClose={() => setPick(null)} title="Tipo de projeto" value={disc} onPick={setDisc} options={[{ v: 'hidro', l: 'Hidrossanitário' }, { v: 'eletr', l: 'Elétrico' }, { v: 'estru', l: 'Estrutural' }]} />
     <window.Picker open={pick === 'kind'} onClose={() => setPick(null)} title="Tipo" value={kind} onPick={setKind} options={[{ v: 'asbuilt', l: 'Como foi construído', sub: 'Visível ao morador' }, { v: 'projeto', l: 'Projetado', sub: 'Restrito a engenheiro/admin' }]} />
@@ -109,7 +109,7 @@ function MPlantaForm({ planta, pop, toast }) {
 
       {/* Marcador de ancoragem */}
       {marker ? (
-        <window.Group header="Marcador de ancoragem" footer="Família e ID são gerados pelo sistema e impressos no marcador — a câmera os lê automaticamente. O tamanho impresso é essencial para escalar o modelo.">
+        <window.Group header="Marcador de ancoragem" footer="Família e ID são gerados pelo sistema e impressos no marcador; a câmera os lê automaticamente. O tamanho impresso é essencial para escalar o modelo.">
           <div style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '13px 14px', borderBottom: '1px solid #F1F3F6' }}>
             <TagGlyph size={52} />
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -118,7 +118,7 @@ function MPlantaForm({ planta, pop, toast }) {
             </div>
             <window.Badge color="var(--slate)" bg="#EEF1F5">Gerado pelo sistema</window.Badge>
           </div>
-          <window.FInput label="Localização" value={marker.location} onChange={setLoc} placeholder="Hall hidráulico — parede norte" />
+          <window.FInput label="Localização" value={marker.location} onChange={setLoc} placeholder="Hall hidráulico, parede norte" />
           <window.FSelect label="Tamanho impresso" display={`${marker.size} cm`} onClick={() => setPick('size')} />
           <window.Row icon={<window.MIc.download s={18} />} iconBg="var(--orange-100)" iconColor="var(--orange-600)" title="Baixar marcador para impressão" sub="PDF · pronto para colar no ambiente" last onClick={() => setShowTag(true)} />
         </window.Group>
@@ -219,7 +219,7 @@ function MEmpForm({ emp, pop, toast, push }) {
         <window.FSelect label="Construtora" display={window.construtoraName(construtora)} onClick={() => setPick('construtora')} last />
       </window.Group>
       <window.Group header="Localização">
-        <window.FInput label="Endereço" value={address} onChange={setAddress} placeholder="Rua, número — bairro" />
+        <window.FInput label="Endereço" value={address} onChange={setAddress} placeholder="Rua, número, bairro" />
         <window.FSelect label="Estado" display={estado} onClick={() => setPick('estado')} />
         <window.FSelect label="Cidade" display={city || 'Selecionar'} onClick={() => setPick('cidade')} last />
       </window.Group>
@@ -270,7 +270,7 @@ function MConstrutoraForm({ construtora, pop, toast }) {
     <window.Page large={false} title={isNew ? 'Nova construtora' : 'Editar'} onBack={{ label: 'Construtoras', fn: pop }}
       right={<button className="tap" onClick={save} style={{ background: 'none', border: 0, color: 'var(--orange-600)', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>{isNew ? 'Criar' : 'Salvar'}</button>}>
       <window.Group header="Dados">
-        <window.FInput label="Nome" value={name} onChange={setName} placeholder="Construtora Gimball" />
+        <window.FInput label="Nome" value={name} onChange={setName} placeholder="Construtora Teste" />
         <window.FInput label="CNPJ" value={cnpj} onChange={setCnpj} placeholder="00.000.000/0001-00" last />
       </window.Group>
       <window.Group header="Localização">

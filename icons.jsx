@@ -1,4 +1,4 @@
-// icons.jsx — line icon set (stroke = currentColor). Keep geometry simple.
+// icons.jsx - line icon set (stroke = currentColor). Keep geometry simple.
 
 const S = (p) => ({ fill: 'none', stroke: 'currentColor', strokeWidth: p.w || 1.8,
   strokeLinecap: 'round', strokeLinejoin: 'round' });

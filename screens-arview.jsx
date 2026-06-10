@@ -1,4 +1,4 @@
-// screens-arview.jsx — AR viewer with anchored 3D model + live controls
+// screens-arview.jsx - AR viewer with anchored 3D model + live controls
 
 /* holographic model overlay per project type (simple lines/rects/circles) */
 function ModelOverlay({ typeId, color }) {

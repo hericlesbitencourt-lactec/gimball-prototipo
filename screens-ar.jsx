@@ -1,4 +1,4 @@
-// screens-ar.jsx — Camera (AprilTag scan) + AR viewer
+// screens-ar.jsx - Camera (AprilTag scan) + AR viewer
 
 /* shared simulated environment (photo of the room + fallback + vignette) */
 function ARScene({ blur = 0 }) {
@@ -24,7 +24,7 @@ function ARScene({ blur = 0 }) {
   );
 }
 
-/* a faux AprilTag (tag36h11-style) — just black & white squares */
+/* a faux AprilTag (tag36h11-style) - just black & white squares */
 const TAG_BITS = [
   [0,0,0,0,0,0,0,0],
   [0,1,1,1,1,1,1,0],
@@ -215,7 +215,7 @@ function HelpSheet({ onClose }) {
               É um <b>marcador físico</b> de referência fixado no ambiente. A câmera o reconhece e usa sua posição e tamanho real para <b>ancorar e escalar</b> o modelo 3D corretamente no espaço.
             </div>
             <div style={{ fontSize: 13, color: 'var(--slate)', lineHeight: 1.5, marginTop: 10 }}>
-              O marcador <b>não é</b> a planta — ele apenas indica onde o modelo deve aparecer. A busca é automática: basta mantê-lo enquadrado.
+              O marcador <b>não é</b> a planta; ele apenas indica onde o modelo deve aparecer. A busca é automática: basta mantê-lo enquadrado.
             </div>
           </div>
         </div>

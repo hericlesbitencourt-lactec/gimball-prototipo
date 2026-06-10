@@ -1,7 +1,7 @@
-// admin-data.jsx — mock rows for the Gimball admin
+// admin-data.jsx - mock rows for the Gimball admin
 
 /* ════════════════════════════════════════════════════════════
-   LISTAS SELECIONÁVEIS (sem tabelas extras — apenas constantes)
+   LISTAS SELECIONÁVEIS (sem tabelas extras, apenas constantes)
    ════════════════════════════════════════════════════════════ */
 const ESTADOS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 const CIDADES = {
@@ -18,7 +18,7 @@ const cidadesDe = (uf) => CIDADES[uf] || [];
    MOCK ROWS
    ════════════════════════════════════════════════════════════ */
 const ADM_CONSTRUTORAS = [
-  { id: 'c1', name: 'Construtora Gimball', cnpj: '12.345.678/0001-90', city: 'Curitiba', state: 'PR', emps: 2 },
+  { id: 'c1', name: 'Construtora Teste', cnpj: '12.345.678/0001-90', city: 'Curitiba', state: 'PR', emps: 2 },
   { id: 'c2', name: 'Incorporadora Lume', cnpj: '98.765.432/0001-10', city: 'Curitiba', state: 'PR', emps: 1 },
   { id: 'c3', name: 'MRV Engenharia', cnpj: '01.234.567/0001-55', city: 'Belo Horizonte', state: 'MG', emps: 0 },
 ];
@@ -79,9 +79,9 @@ const ADM_USERS = [
 ];
 
 const ADM_EMP = [
-  { id: 'e1', name: 'Residencial Aurora', construtora: 'c1', city: 'Curitiba', state: 'PR', status: 'delivered', delivery: 'mar/2024', units: 96, address: 'Av. Sete de Setembro, 3400 — Batel', cover: '#1d3a5f' },
-  { id: 'e2', name: 'Edifício Pátio Cabral', construtora: 'c1', city: 'Curitiba', state: 'PR', status: 'construction', delivery: 'dez/2026', units: 48, address: 'R. Mateus Leme, 1820 — São Lourenço', cover: '#27506e' },
-  { id: 'e3', name: 'Condomínio Vista Verde', construtora: 'c2', city: 'Curitiba', state: 'PR', status: 'delivered', delivery: 'ago/2023', units: 22, address: 'Al. Pres. Taunay, 920 — Bigorrilho', cover: '#21405c' },
+  { id: 'e1', name: 'Residencial Aurora', construtora: 'c1', city: 'Curitiba', state: 'PR', status: 'delivered', delivery: 'mar/2024', units: 96, address: 'Av. Sete de Setembro, 3400, Batel', cover: '#1d3a5f' },
+  { id: 'e2', name: 'Edifício Pátio Cabral', construtora: 'c1', city: 'Curitiba', state: 'PR', status: 'construction', delivery: 'dez/2026', units: 48, address: 'R. Mateus Leme, 1820, São Lourenço', cover: '#27506e' },
+  { id: 'e3', name: 'Condomínio Vista Verde', construtora: 'c2', city: 'Curitiba', state: 'PR', status: 'delivered', delivery: 'ago/2023', units: 22, address: 'Al. Pres. Taunay, 920, Bigorrilho', cover: '#21405c' },
 ];
 
 const ADM_IMOVEIS = [
@@ -93,23 +93,23 @@ const ADM_IMOVEIS = [
 ];
 
 const ADM_PLANTAS = [
-  { id: 'p1', imovel: 'i1', disc: 'hidro', kind: 'asbuilt', name: 'Hidrossanitário — Pavimento tipo', version: 'v2.1', format: 'usdz', size: '18,4 MB', status: 'available', updated: '12/03/2024', by: 'Rafael N.',
-    marker: { family: 'tag36h11', code: 21, size: '16,0', location: 'Hall hidráulico — parede norte' } },
-  { id: 'p2', imovel: 'i1', disc: 'hidro', kind: 'projeto', name: 'Hidrossanitário — Projeto executivo', version: 'v1.0', format: 'usdz', size: '15,1 MB', status: 'available', updated: '04/01/2024', by: 'Rafael N.',
-    marker: { family: 'tag36h11', code: 22, size: '16,0', location: 'Hall hidráulico — parede norte' } },
-  { id: 'p3', imovel: 'i1', disc: 'eletr', kind: 'asbuilt', name: 'Elétrico — Pavimento tipo', version: 'v1.3', format: 'usdz', size: '12,7 MB', status: 'available', updated: '12/03/2024', by: 'Helena S.',
-    marker: { family: 'tag36h11', code: 47, size: '16,0', location: 'Quadro elétrico — corredor' } },
-  { id: 'p4', imovel: 'i1', disc: 'estru', kind: 'asbuilt', name: 'Estrutural — Pavimento tipo', version: 'v1.0', format: 'glb', size: '22,9 MB', status: 'available', updated: '28/02/2024', by: 'Rafael N.',
-    marker: { family: 'tag36h11', code: 73, size: '20,0', location: 'Pilar P3 — sala' } },
-  { id: 'p5', imovel: 'i3', disc: 'estru', kind: 'asbuilt', name: 'Estrutural — Pavimento tipo', version: '—', format: 'usdz', size: '—', status: 'pending', updated: '—', by: '—',
+  { id: 'p1', imovel: 'i1', disc: 'hidro', kind: 'asbuilt', name: 'Hidrossanitário · Pavimento tipo', version: 'v2.1', format: 'usdz', size: '18,4 MB', status: 'available', updated: '12/03/2024', by: 'Rafael N.',
+    marker: { family: 'tag36h11', code: 21, size: '16,0', location: 'Hall hidráulico, parede norte' } },
+  { id: 'p2', imovel: 'i1', disc: 'hidro', kind: 'projeto', name: 'Hidrossanitário · Projeto executivo', version: 'v1.0', format: 'usdz', size: '15,1 MB', status: 'available', updated: '04/01/2024', by: 'Rafael N.',
+    marker: { family: 'tag36h11', code: 22, size: '16,0', location: 'Hall hidráulico, parede norte' } },
+  { id: 'p3', imovel: 'i1', disc: 'eletr', kind: 'asbuilt', name: 'Elétrico · Pavimento tipo', version: 'v1.3', format: 'usdz', size: '12,7 MB', status: 'available', updated: '12/03/2024', by: 'Helena S.',
+    marker: { family: 'tag36h11', code: 47, size: '16,0', location: 'Quadro elétrico, corredor' } },
+  { id: 'p4', imovel: 'i1', disc: 'estru', kind: 'asbuilt', name: 'Estrutural · Pavimento tipo', version: 'v1.0', format: 'glb', size: '22,9 MB', status: 'available', updated: '28/02/2024', by: 'Rafael N.',
+    marker: { family: 'tag36h11', code: 73, size: '20,0', location: 'Pilar P3, sala' } },
+  { id: 'p5', imovel: 'i3', disc: 'estru', kind: 'asbuilt', name: 'Estrutural · Pavimento tipo', version: '—', format: 'usdz', size: '—', status: 'pending', updated: '—', by: '—',
     marker: null },
-  { id: 'p6', imovel: 'i3', disc: 'hidro', kind: 'projeto', name: 'Hidrossanitário — Projeto executivo', version: 'v0.9', format: 'usdz', size: '14,2 MB', status: 'available', updated: '28/04/2026', by: 'Helena S.',
-    marker: { family: 'tag36h11', code: 31, size: '16,0', location: 'Shaft — área de serviço' } },
-  { id: 'p7', imovel: 'i5', disc: 'estru', kind: 'asbuilt', name: 'Estrutural — Térreo', version: '—', format: 'usdz', size: '—', status: 'pending', updated: '—', by: '—',
+  { id: 'p6', imovel: 'i3', disc: 'hidro', kind: 'projeto', name: 'Hidrossanitário · Projeto executivo', version: 'v0.9', format: 'usdz', size: '14,2 MB', status: 'available', updated: '28/04/2026', by: 'Helena S.',
+    marker: { family: 'tag36h11', code: 31, size: '16,0', location: 'Shaft, área de serviço' } },
+  { id: 'p7', imovel: 'i5', disc: 'estru', kind: 'asbuilt', name: 'Estrutural · Térreo', version: '—', format: 'usdz', size: '—', status: 'pending', updated: '—', by: '—',
     marker: null },
 ];
 
-// próximo id livre na família (mock — o sistema atribuiria isso no backend)
+// próximo id livre na família (mock, o sistema atribuiria isso no backend)
 let _nextTagCode = 90;
 const nextTagCode = () => _nextTagCode++;
 

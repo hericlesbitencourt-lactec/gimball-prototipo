@@ -1,4 +1,4 @@
-// screens-flow.jsx — Login · Dashboard · Property detail · Plan selection
+// screens-flow.jsx - Login · Dashboard · Property detail · Plan selection
 
 /* ───────────────────── LOGIN ───────────────────── */
 function LoginScreen({ onLogin }) {
@@ -235,7 +235,7 @@ function PropertyScreen({ propId, onBack, onOpenType }) {
           background: '#EAF1F8', borderRadius: 14, color: '#2C5A7E' }}>
           <span style={{ flex: '0 0 auto', marginTop: 1 }}><window.IcCube s={18} /></span>
           <div style={{ fontSize: 12.5, lineHeight: 1.45 }}>
-            Como morador, você visualiza as plantas <b>“Como foi construído”</b> (as-built) — a versão final conforme executado na obra.
+            Como morador, você visualiza as plantas <b>“Como foi construído”</b> (as-built), a versão final conforme executado na obra.
           </div>
         </div>
       </div>

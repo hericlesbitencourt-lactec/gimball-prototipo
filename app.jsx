@@ -1,4 +1,4 @@
-// app.jsx — nav stack, side rail, state orchestration
+// app.jsx - nav stack, side rail, state orchestration
 
 const { useState, useEffect, useRef, useLayoutEffect } = React;
 const DARK_SCREENS = ['camera', 'arview'];
