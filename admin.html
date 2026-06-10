@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gimball — Painel Admin (iOS)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --orange:#E8843A; --orange-600:#D6731F; --orange-100:#FBEBDC;
+    --navy-900:#0B1A2E; --navy-800:#102339; --navy-700:#193252; --navy-600:#244268;
+    --ink:#1B232E; --slate:#5C6675; --slate-300:#9AA3B0;
+    --line:#E4E7EC; --bg:#F3F4F6; --card:#FFFFFF;
+    --green:#2EA56B; --green-100:#E1F2E9;
+    --amber:#D49A2E; --amber-100:#F8EFD8;
+    --red:#D2503C; --red-100:#F8E2DD;
+    --cyan:#46A7DC;
+    --r-lg:26px; --r-md:18px; --r-sm:12px;
+    --sans:'Inter',-apple-system,system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:var(--sans);
+    background:
+      radial-gradient(1200px 700px at 78% -10%, rgba(36,66,104,.55) 0, transparent 60%),
+      linear-gradient(180deg,#0d1b2e 0%,#10243b 100%);
+    background-color:#0e1c30;
+    color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden;
+  }
+  #root{height:100vh;width:100vw}
+
+  .stage{height:100vh;width:100vw;display:flex;align-items:center;justify-content:center;gap:clamp(20px,4vw,64px);position:relative}
+  .stage::before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+    background-size:34px 34px;
+    -webkit-mask-image:radial-gradient(1100px 800px at 60% 40%,#000 0,transparent 75%);mask-image:radial-gradient(1100px 800px at 60% 40%,#000 0,transparent 75%);
+  }
+  .phone-wrap{position:relative;z-index:2;flex:0 0 auto}
+
+  .rail{position:relative;z-index:2;width:262px;color:#cdd6e3;font-family:var(--sans);align-self:center;max-height:88vh;overflow:auto;padding-right:4px}
+  .rail::-webkit-scrollbar{width:0}
+  .rail .brand{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+  .rail .brand b{font-weight:800;letter-spacing:-.02em;font-size:21px;color:#fff}
+  .rail .brand b i{color:var(--orange);font-style:normal}
+  .rail .tag{font-family:var(--mono);font-size:11px;color:#7f8da3;letter-spacing:.02em;margin-bottom:22px;line-height:1.5}
+  .rail h4{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#67768d;margin:20px 0 9px}
+  .rail .step{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:transparent;border:0;cursor:pointer;color:#aab4c2;font-size:13.5px;font-weight:500;padding:8px 10px;border-radius:11px;transition:.18s;font-family:var(--sans)}
+  .rail .step:hover{background:rgba(255,255,255,.05);color:#e7edf5}
+  .rail .step.active{background:rgba(232,132,58,.14);color:#fff}
+  .rail .step .n{flex:0 0 auto;width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-family:var(--mono);font-size:11px;font-weight:600;background:rgba(255,255,255,.07);color:#8c99ab}
+  .rail .step.active .n{background:var(--orange);color:#fff}
+  .rail .chip{display:inline-flex;align-items:center;gap:7px;cursor:pointer;border:0;background:rgba(255,255,255,.05);color:#b8c2d0;font-family:var(--sans);font-size:12px;font-weight:500;padding:7px 11px;border-radius:9px;transition:.16s}
+  .rail .chip:hover{background:rgba(255,255,255,.1);color:#fff}
+  .rail .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .rail .reset{margin-top:24px;width:100%;border:1px solid rgba(255,255,255,.14);background:transparent;color:#cdd6e3;font-family:var(--sans);font-weight:600;font-size:13px;padding:11px;border-radius:12px;cursor:pointer;transition:.16s}
+  .rail .reset:hover{background:rgba(255,255,255,.07)}
+  @media(max-width:920px){ .rail{display:none} }
+
+  .mono{font-family:var(--mono)}
+  button,input,select{font-family:inherit}
+  ::selection{background:var(--orange);color:#fff}
+
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes shimmer{0%{background-position:-180px 0}100%{background-position:180px 0}}
+  @keyframes fadeUp{from{transform:translateY(9px)}to{transform:translateY(0)}}
+  @keyframes toastIn{from{transform:translateY(16px)}to{transform:translateY(0)}}
+  @keyframes popIn{from{transform:scale(.86)}to{transform:scale(1)}}
+  @keyframes aFade{from{opacity:0}to{opacity:1}}
+  @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .fadeup{animation:fadeUp .42s cubic-bezier(.22,1,.36,1)}
+  .tap{transition:transform .12s ease, box-shadow .18s ease, background .18s ease}
+  .tap:active{transform:scale(.975)}
+  @keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
+  @keyframes slideOutRight{from{transform:translateX(0)}to{transform:translateX(100%)}}
+  @keyframes screenFade{from{opacity:0;transform:scale(.992)}to{opacity:1;transform:none}}
+  .layer{position:absolute;top:0;left:0;width:100%;height:100%;transition:transform .42s cubic-bezier(.32,.72,0,1)}
+  .lyr-in{animation:slideInRight .42s cubic-bezier(.32,.72,0,1)}
+  .lyr-out{animation:slideOutRight .42s cubic-bezier(.32,.72,0,1) both;z-index:3}
+  .lyr-fade{animation:screenFade .4s ease}
+  @media(prefers-reduced-motion:reduce){.fadeup{animation:none!important}}
+</style>
+</head>
+<body>
+  <template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0B1A2E"/><text x="50" y="63" font-family="Arial, sans-serif" font-size="38" font-weight="800" text-anchor="middle"><tspan fill="#E8843A">g</tspan><tspan fill="#ffffff">A</tspan></text></svg></template>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="icons.jsx"></script>
+  <script type="text/babel" src="ui.jsx"></script>
+  <script type="text/babel" src="admin-data.jsx"></script>
+  <script type="text/babel" src="admin-m-ui.jsx"></script>
+  <script type="text/babel" src="admin-m-screens.jsx"></script>
+  <script type="text/babel" src="admin-m-screens2.jsx"></script>
+  <script type="text/babel" src="admin-m-more.jsx"></script>
+  <script type="text/babel" src="admin-m-app.jsx"></script>
+</body>
+</html>
