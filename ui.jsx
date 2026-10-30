@@ -17,7 +17,7 @@ function EmailNotice({ title, email, children }) {
       </div>
       <h1 style={{ fontSize: 24, letterSpacing: '-.025em', margin: '0 0 14px', color: 'var(--ink)' }}>{title}</h1>
       <p style={{ fontSize: 14, color: 'var(--slate)', lineHeight: 1.6 }}>E-mail de destino<br/><strong style={{ color: 'var(--ink)', overflowWrap: 'anywhere' }}>{email}</strong></p>
-      <p className="demo-label" style={{ marginTop: 24, lineHeight: 1.6 }}>Demonstração: nenhum e-mail real foi enviado.</p>
+
       {children}
     </div>
   );
@@ -164,6 +164,54 @@ function Screen({ children, onScroll, dark, bg, pad = true }) {
   );
 }
 
+function LogoutModal({ open, onCancel, onConfirm }) {
+  const overlay = React.useRef(null);
+  const panel = React.useRef(null);
+  const titleId = React.useId();
+  const descriptionId = React.useId();
+  React.useEffect(() => {
+    if (!open) return;
+    const previousFocus = document.activeElement;
+    const node = panel.current;
+    const siblings = [...overlay.current.parentElement.children].filter(el => el !== overlay.current);
+    const previousInert = siblings.map(el => el.inert);
+    siblings.forEach(el => { el.inert = true; });
+    const buttons = [...node.querySelectorAll('button')];
+    buttons[0].focus();
+    const handleKey = e => {
+      if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
+      if (e.key === 'Tab') {
+        const first = buttons[0], last = buttons[buttons.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      siblings.forEach((el, i) => { el.inert = previousInert[i]; });
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
+  }, [open]);
+  if (!open) return null;
+  const buttonStyle = { flex: 1, minHeight: 52, border: 0, background: 'transparent', padding: '14px 10px', fontSize: 16, fontWeight: 650, cursor: 'pointer' };
+  return ReactDOM.createPortal(
+    <div ref={overlay} onClick={onCancel} style={{ position: 'absolute', inset: 0, zIndex: 100, display: 'grid', placeItems: 'center', padding: 24, background: 'rgba(8,14,22,.48)' }}>
+      <div ref={panel} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} onClick={e => e.stopPropagation()}
+        style={{ width: '100%', maxWidth: 320, maxHeight: '100%', overflowY: 'auto', borderRadius: 24, background: '#fff', boxShadow: '0 18px 60px rgba(0,0,0,.25)' }}>
+        <div style={{ padding: '25px 22px 23px', textAlign: 'center' }}>
+          <h2 id={titleId} style={{ margin: '0 0 10px', fontSize: 20, fontWeight: 750, letterSpacing: '-.02em', color: 'var(--ink)' }}>Sair do aplicativo?</h2>
+          <p id={descriptionId} style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: 'var(--slate)' }}>Você voltará para a tela de acesso. Deseja realmente sair?</p>
+        </div>
+        <div style={{ display: 'flex', borderTop: '1px solid var(--line)' }}>
+          <button type="button" onClick={onCancel} style={{ ...buttonStyle, color: 'var(--ink)', borderRight: '1px solid var(--line)' }}>Cancelar</button>
+          <button type="button" onClick={onConfirm} style={{ ...buttonStyle, color: 'var(--red)' }}>Sair</button>
+        </div>
+      </div>
+    </div>, document.querySelector('.app-surface')
+  );
+}
+
 /* toast */
 function Toast({ tone = 'ok', children }) {
   const map = { ok: ['var(--green)', <window.IcCheck s={18} w={2.4} />],
@@ -182,5 +230,5 @@ function Toast({ tone = 'ok', children }) {
 
 Object.assign(window, {
   GMark, EmailNotice, Btn, Badge, StatusBadge, KindBadge, Avatar, Spinner, Skel, Card,
-  EmptyState, TopBar, Screen, Toast,
+  EmptyState, TopBar, Screen, Toast, LogoutModal,
 });

@@ -28,6 +28,7 @@ function Layer({ screen, role, instant, children }) {
 
 function App() {
   const [authed, setAuthed] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
   const [stack, setStack] = useState([{ key: 'dashboard' }]);
   const [leaving, setLeaving] = useState(null);
   const [instant, setInstant] = useState(false);
@@ -76,7 +77,7 @@ function App() {
 
   /* ── navigation actions ── */
   const doLogin = () => { setAuthed(true); setDashState('loading'); setStack([{ key: 'dashboard' }]); setRoute('dashboard'); };
-  const logout = () => { setAuthed(false); setRoute('login'); };
+  const logout = () => { setConfirmLogout(false); setToast(null); setAuthed(false); setRoute('login'); };
   const openProperty = (propId) => { push({ key: 'property', propId }); setRoute('property'); };
   const openType = (propId, typeId) => { push({ key: 'plans', propId, typeId }); setRoute('plans'); };
   const viewPlant = (propId, typeId, plant) => { setCameraForce(null); push({ key: 'camera', propId, typeId, plant }); setRoute('camera'); };
@@ -85,7 +86,8 @@ function App() {
   /* ── render one screen by descriptor ── */
   const render = (s) => {
     switch (s.key) {
-      case 'dashboard': return <window.DashboardScreen user={window.residentUser()} state={dashState} onOpen={openProperty} onLogout={logout} />;
+      case 'dashboard': return <window.DashboardScreen user={window.residentUser()} state={dashState} onOpen={openProperty} onLogout={() => setConfirmLogout(true)} onProfile={() => push({ key: 'profile' })} />;
+      case 'profile': return <window.ProfileScreen user={window.ADM_USERS.find(u => u.id === 'u1')} onBack={pop} onSaved={msg => { fireToast('ok', msg); pop(); }} />;
       case 'property': return <window.PropertyScreen propId={s.propId} onBack={pop} onOpenType={(t) => openType(s.propId, t)} />;
       case 'plans': return <window.PlansScreen propId={s.propId} typeId={s.typeId} onBack={pop}
         onView={(pl) => viewPlant(s.propId, s.typeId, pl)} onToast={fireToast} />;
@@ -127,6 +129,7 @@ function App() {
               </Layer>
             )}
           </div>
+          <window.LogoutModal open={confirmLogout} onCancel={() => setConfirmLogout(false)} onConfirm={logout} />
         </window.IOSDevice>
       </div>
     </div>

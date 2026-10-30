@@ -8,14 +8,15 @@ function TagGlyph({ size = 34 }) {
 }
 
 /* ───────── PLANTAS (tab) ───────── */
-function MPlantas({ push, toast }) {
+function MPlantas({ push, toast, role = 'admin' }) {
   const [q, setQ] = React.useState('');
   const [disc, setDisc] = React.useState('all');
   const [up, setUp] = React.useState(false);
-  const rows = window.ADM_PLANTAS.filter(p => (disc === 'all' || p.disc === disc) && p.name.toLowerCase().includes(q.toLowerCase()));
+  const plants = window.technicalPlants(role);
+  const rows = plants.filter(p => (disc === 'all' || p.disc === disc) && p.name.toLowerCase().includes(q.toLowerCase()));
   return (
-    <window.Page title="Plantas" sub={`${window.ADM_PLANTAS.length} modelos`}
-      right={<window.NavBtn icon={<window.MIc.upload s={19} />} accent label="Enviar" onClick={() => setUp(true)} />}>
+    <window.Page title="Plantas" sub={`${plants.length} modelos`}
+      right={(role === 'admin' || window.PERM_MATRIX['plantas.upload'].includes(role)) && <window.NavBtn icon={<window.MIc.upload s={19} />} accent label="Enviar" onClick={() => setUp(true)} />}>
       <window.Search value={q} onChange={setQ} placeholder="Buscar planta" />
       <window.Segment value={disc} set={setDisc} opts={[['all', 'Todas'], ['hidro', 'Hidro'], ['eletr', 'Elétrico'], ['estru', 'Estrut.']]} />
       <window.Group>
@@ -27,12 +28,12 @@ function MPlantas({ push, toast }) {
         ))}
       </window.Group>
       {rows.length === 0 && <window.EmptyState icon={<window.MIc.cube s={30} />} title="Nenhuma planta" body="Ajuste a busca ou envie um novo modelo." />}
-      <UploadSheet open={up} onClose={() => setUp(false)} toast={toast} />
+      <UploadSheet open={up} onClose={() => setUp(false)} toast={toast} role={role} />
     </window.Page>
   );
 }
 
-function UploadSheet({ open, onClose, toast }) {
+function UploadSheet({ open, onClose, toast, role = 'admin' }) {
   const [file, setFile] = React.useState(null);
   const [pick, setPick] = React.useState(null);
   const [imovel, setImovel] = React.useState('i1');
@@ -43,7 +44,7 @@ function UploadSheet({ open, onClose, toast }) {
     <>
     <window.Sheet open={open} onClose={onClose} title="Enviar planta"
       footer={<><window.Action variant="ghost" onClick={onClose}>Cancelar</window.Action><window.Action disabled={!file} onClick={() => { if (!window.ADM_IMOVEIS.some(i => i.id === imovel)) return toast('Selecione um imóvel cadastrado.');
-      window.Demo.save('ADM_PLANTAS', null, { imovel, disc, kind, name: window.DISC_META[disc].name + ' · Modelo de demonstração', version: 'v1.0', format: 'usdz', size: '18,4 MB', status: 'available', updated: new Date().toLocaleDateString('pt-BR'), by: 'Carla B.', marker: null }); toast('Modelo de demonstração adicionado.'); onClose(); }}>Enviar</window.Action></>}>
+      window.Demo.save('ADM_PLANTAS', null, { imovel, disc, kind, name: window.DISC_META[disc].name + ' · Modelo técnico', version: 'v1.0', format: 'usdz', size: '18,4 MB', status: 'available', updated: new Date().toLocaleDateString('pt-BR'), by: window.ADM_USERS.find(u => u.id === (role === 'engenheiro' ? 'u2' : 'u3'))?.name || 'Equipe técnica', marker: null }); toast('Modelo técnico adicionado.'); onClose(); }}>Enviar</window.Action></>}>
       <div style={{ padding: '4px 16px 0' }}>
         <div className="tap" onClick={() => setFile('apto1204_hidro_asbuilt.usdz')} style={{ border: `2px dashed ${file ? 'var(--green)' : 'var(--line)'}`, borderRadius: 16,
           padding: '26px 18px', textAlign: 'center', background: file ? 'var(--green-100)' : '#fff', cursor: 'pointer', marginBottom: 18, transition: '.15s' }}>
@@ -54,8 +55,8 @@ function UploadSheet({ open, onClose, toast }) {
             <div className="mono" style={{ fontSize: 13, fontWeight: 650, color: 'var(--ink)' }}>{file}</div>
             <div style={{ fontSize: 12, color: 'var(--slate)', marginTop: 3 }}>18,4 MB · pronto para enviar</div>
           </> : <>
-            <div style={{ fontSize: 15, fontWeight: 650, color: 'var(--ink)' }}>Usar arquivo de demonstração</div>
-            <div style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 3 }}>Seleção simulada · sem envio de arquivo</div>
+            <div style={{ fontSize: 15, fontWeight: 650, color: 'var(--ink)' }}>Usar modelo de exemplo</div>
+            <div style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 3 }}>USDZ · Modelo de referência</div>
           </>}
         </div>
       </div>
@@ -66,7 +67,7 @@ function UploadSheet({ open, onClose, toast }) {
       </window.Group>
     </window.Sheet>
     {/* pickers como irmãos do sheet: nunca cortados pelo scroll interno */}
-    <window.Picker open={pick === 'imovel'} onClose={() => setPick(null)} title="Imóvel" value={imovel} onPick={setImovel} options={window.ADM_IMOVEIS.map(i => ({ v: i.id, l: i.identifier, sub: window.empName(i.emp) }))} />
+    <window.Picker open={pick === 'imovel'} onClose={() => setPick(null)} title="Imóvel" value={imovel} onPick={setImovel} searchable searchPlaceholder="Buscar imóvel ou empreendimento" options={window.ADM_IMOVEIS.map(i => ({ v: i.id, l: i.identifier, sub: window.empName(i.emp) }))} />
     <window.Picker open={pick === 'disc'} onClose={() => setPick(null)} title="Tipo de projeto" value={disc} onPick={setDisc} options={[{ v: 'hidro', l: 'Hidrossanitário' }, { v: 'eletr', l: 'Elétrico' }, { v: 'estru', l: 'Estrutural' }]} />
     <window.Picker open={pick === 'kind'} onClose={() => setPick(null)} title="Tipo" value={kind} onPick={setKind} options={[{ v: 'asbuilt', l: 'Como foi construído', sub: 'Visível ao morador' }, { v: 'projeto', l: 'Projetado', sub: 'Restrito a engenheiro/admin' }]} />
     </>
@@ -74,7 +75,7 @@ function UploadSheet({ open, onClose, toast }) {
 }
 
 /* ───────── PLANTA (form/detail) ───────── */
-function MPlantaForm({ planta, pop, toast, push }) {
+function MPlantaForm({ planta, pop, toast, push, role = 'admin' }) {
   const p = planta;
   const [name, setName] = React.useState(p.name);
   const [version, setVersion] = React.useState(p.version);
@@ -90,7 +91,7 @@ function MPlantaForm({ planta, pop, toast, push }) {
   };
   const genMarker = () => { setMarker({ family: 'tag36h11', code: window.nextTagCode(), size: '16,0', location: '' }); toast('Marcador gerado.'); };
   const setLoc = (v) => setMarker(m => ({ ...m, location: v }));
-  const viewAR = () => { if (p.status !== 'available' || !marker) return toast('Disponibilize o modelo e gere um marcador antes da simulação.'); push({
+  const viewAR = () => { if (p.status !== 'available' || !marker) return toast('Disponibilize o modelo e gere um marcador antes de visualizar em AR.'); push({
     key: 'camera', typeId: p.disc,
     plant: { ...p, name, tag: marker ? `${marker.family} · id ${marker.code}` : 'tag36h11',
       file: `${p.imovel}_${p.disc}_${p.kind}.${p.format.toLowerCase()}` },
@@ -114,7 +115,7 @@ function MPlantaForm({ planta, pop, toast, push }) {
       <window.Group header="Modelo">
         <window.FInput label="Nome" value={name} onChange={setName} />
         <window.FInput label="Versão" value={version} onChange={setVersion} />
-        <window.FSelect label="Formato" display={p.format.toUpperCase() + (p.size !== '—' ? ' · ' + p.size : '')} onClick={() => toast("Formato definido pelo arquivo de demonstração.")} last />
+        <window.FSelect label="Formato" display={p.format.toUpperCase() + (p.size !== '—' ? ' · ' + p.size : '')} onClick={() => toast("O formato é definido pelo arquivo selecionado.")} last />
       </window.Group>
       <window.Group header="Acesso" footer="“Projetado” normalmente fica restrito a Engenheiro/Admin. O morador só vê o as-built.">
         <window.FSelect label="Tipo" display={kind === 'asbuilt' ? 'Como foi construído' : 'Projetado'} onClick={() => setPick('kind')} />
@@ -123,7 +124,7 @@ function MPlantaForm({ planta, pop, toast, push }) {
 
       {/* Marcador de ancoragem */}
       {marker ? (
-        <window.Group header="Marcador de ancoragem" footer="Família e ID são gerados pelo sistema e impressos no marcador; a versão integrada fará a leitura. Nesta demonstração, o desenho é ilustrativo. O tamanho impresso é essencial para escalar o modelo.">
+        <window.Group header="Marcador de ancoragem" footer="O tamanho impresso é a referência para a escala do modelo.">
           <div style={{ display: 'flex', alignItems: 'center', gap: 13, padding: '13px 14px', borderBottom: '1px solid #F1F3F6' }}>
             <TagGlyph size={52} />
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -134,7 +135,7 @@ function MPlantaForm({ planta, pop, toast, push }) {
           </div>
           <window.FInput label="Localização" value={marker.location} onChange={setLoc} placeholder="Hall hidráulico, parede norte" />
           <window.FSelect label="Tamanho impresso" display={`${marker.size} cm`} onClick={() => setPick('size')} />
-          <window.Row icon={<window.MIc.download s={18} />} iconBg="var(--orange-100)" iconColor="var(--orange-600)" title="Prévia do marcador" sub="Ilustração demonstrativa · sem validade para leitura" last onClick={() => setShowTag(true)} />
+          <window.Row icon={<window.MIc.download s={18} />} iconBg="var(--orange-100)" iconColor="var(--orange-600)" title="Prévia do marcador" sub="Prévia ilustrativa do marcador" last onClick={() => setShowTag(true)} />
         </window.Group>
       ) : (
         <window.Group header="Marcador de ancoragem" footer="Cada planta precisa de um marcador físico para ser posicionada no ambiente. O sistema atribui família e ID automaticamente.">
@@ -150,11 +151,11 @@ function MPlantaForm({ planta, pop, toast, push }) {
       )}
 
       <window.Group>
-        <window.Row icon={<window.MIc.cube s={18} />} title="Baixar modelo" onClick={() => toast('Download demonstrativo. Nenhum modelo real conectado.')} />
+        <window.Row icon={<window.MIc.cube s={18} />} title="Baixar modelo" onClick={() => toast('O arquivo não está disponível para download.')} />
         <window.Row icon={<window.MIc.trash s={18} />} iconBg="var(--red-100)" iconColor="var(--red)" title="Remover planta" danger last onClick={() => { const error = window.Demo.remove('ADM_PLANTAS', p); if (error) return toast(error); toast('Planta removida.'); pop(); }} />
       </window.Group>
       <window.Picker open={pick === 'kind'} onClose={() => setPick(null)} title="Tipo" value={kind} onPick={setKind} options={[{ v: 'asbuilt', l: 'Como foi construído' }, { v: 'projeto', l: 'Projetado' }]} />
-      <window.Picker open={pick === 'role'} onClose={() => setPick(null)} title="Papel mínimo" value={minRole} onPick={setMinRole} options={[{ v: 'morador', l: 'Morador (e acima)' }, { v: 'engenheiro', l: 'Engenheiro (e acima)' }, { v: 'admin', l: 'Apenas Admin' }]} />
+    <window.Picker open={pick === 'role'} onClose={() => setPick(null)} title="Papel mínimo" value={minRole} onPick={setMinRole} options={[{ v: 'morador', l: 'Morador (e acima)' }, { v: 'engenheiro', l: 'Engenheiro (e acima)' }, ...(role === 'admin' ? [{ v: 'admin', l: 'Apenas Admin' }] : [])]} />
       {marker && <window.Picker open={pick === 'size'} onClose={() => setPick(null)} title="Tamanho impresso" value={marker.size} onPick={(v) => setMarker(m => ({ ...m, size: v }))} options={[{ v: '10,0', l: '10 cm' }, { v: '16,0', l: '16 cm (padrão)' }, { v: '20,0', l: '20 cm' }, { v: '30,0', l: '30 cm' }]} />}
       {marker && <TagSheet open={showTag} onClose={() => setShowTag(false)} marker={marker} planta={p} toast={toast} />}
     </window.Page>
@@ -164,8 +165,8 @@ function MPlantaForm({ planta, pop, toast, push }) {
 /* sheet to preview / “print” the generated marker */
 function TagSheet({ open, onClose, marker, planta, toast }) {
   return (
-    <window.Sheet open={open} onClose={onClose} title="Marcador demonstrativo"
-      footer={<><window.Action variant="ghost" onClick={onClose}>Fechar</window.Action><window.Action icon={<window.MIc.download s={18} />} onClick={() => { toast('Exportação depende da geração real de AprilTags.'); onClose(); }}>Simular exportação</window.Action></>}>
+    <window.Sheet open={open} onClose={onClose} title="Prévia do marcador"
+      footer={<><window.Action variant="ghost" onClick={onClose}>Fechar</window.Action><window.Action icon={<window.MIc.download s={18} />} onClick={() => { toast('Exportação indisponível para esta prévia.'); onClose(); }}>Exportar marcador</window.Action></>}>
       <div style={{ padding: '8px 16px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div style={{ background: '#fff', border: '1px solid var(--line)', borderRadius: 16, padding: 24, marginBottom: 16 }}>
           <TagGlyph size={150} />
@@ -192,7 +193,8 @@ function MEmpList({ push, pop }) {
       <window.Search value={q} onChange={setQ} placeholder="Buscar empreendimento" />
       <div style={{ padding: '0 16px' }}>
         {rows.map(e => (
-          <div key={e.id} className="tap" onClick={() => push({ key: 'empForm', emp: e })} style={{ background: '#fff', borderRadius: 18, overflow: 'hidden', border: '1px solid #ECEEF1', marginBottom: 13, cursor: 'pointer' }}>
+          <div key={e.id} style={{ background: '#fff', borderRadius: 18, overflow: 'hidden', border: '1px solid #ECEEF1', marginBottom: 13 }}>
+            <button type="button" className="tap" onClick={() => push({ key: 'empForm', emp: e })} aria-label={`Editar ${e.name}`} style={{ display: 'block', width: '100%', padding: 0, border: 0, background: 'transparent', textAlign: 'left', cursor: 'pointer' }}>
             <div style={{ height: 64, background: `linear-gradient(135deg,${e.cover},var(--navy-900))`, position: 'relative' }}>
               <div style={{ position: 'absolute', inset: 0, opacity: .4, backgroundImage: 'linear-gradient(rgba(255,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px)', backgroundSize: '18px 18px' }} />
               <div style={{ position: 'absolute', top: 10, right: 12 }}><window.SPill s={e.status} /></div>
@@ -200,12 +202,20 @@ function MEmpList({ push, pop }) {
             <div style={{ padding: '13px 16px 15px' }}>
               <div style={{ fontSize: 16.5, fontWeight: 800, letterSpacing: '-.02em', color: 'var(--ink)' }}>{e.name}</div>
               <div style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 2 }}>{e.address}</div>
-              <div style={{ display: 'flex', gap: 18, marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
-                {[['Construtora', window.construtoraName(e.construtora)], ['Unidades', e.units], ['Local', `${e.city}/${e.state}`]].map(([l, v]) => (
-                  <div key={l} style={{ flex: 1, minWidth: 0 }}><div className="mono" style={{ fontSize: 9, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--slate-300)' }}>{l}</div><div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{v}</div></div>
-                ))}
-              </div>
             </div>
+            </button>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 96px', gap: 12, margin: '0 16px 15px', paddingTop: 12, borderTop: '1px solid var(--line)' }}>
+                <div style={{ display: 'grid', gap: 10 }}>
+                {[['Construtora', window.construtoraName(e.construtora)], ['Local', `${e.city}/${e.state}`]].map(([l, v]) => (
+                  <div key={l} style={{ minWidth: 0 }}><div className="mono" style={{ fontSize: 9, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--slate-300)' }}>{l}</div><div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)', marginTop: 1, overflowWrap: 'anywhere' }}>{v}</div></div>
+                ))}
+                </div>
+                <button type="button" className="tap" aria-label={`Ver imóveis de ${e.name}`} onClick={() => push({ key: 'imoveis', empId: e.id })}
+                  style={{ flex: 1, minWidth: 0, padding: '7px 8px', border: 0, borderRadius: 10, background: 'var(--orange-100)', color: 'var(--orange-600)', cursor: 'pointer', textAlign: 'left' }}>
+                  <span style={{ display: 'block', fontSize: 10, fontWeight: 600 }}>Imóveis cadastrados</span>
+                  <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 14, fontWeight: 700, marginTop: 3 }}>{window.ADM_IMOVEIS.filter(i => i.emp === e.id).length}<window.IcChevR s={16} /></span>
+                </button>
+              </div>
           </div>
         ))}
       </div>
@@ -217,7 +227,7 @@ function MEmpList({ push, pop }) {
 function MEmpForm({ emp, pop, toast, push }) {
   const isNew = !emp;
   const [name, setName] = React.useState(emp ? emp.name : '');
-  const [construtora, setConstrutora] = React.useState(emp ? emp.construtora : 'c1');
+  const [construtora, setConstrutora] = React.useState(emp ? emp.construtora : '');
   const [address, setAddress] = React.useState(emp ? emp.address : '');
   const [estado, setEstado] = React.useState(emp ? emp.state : 'PR');
   const [city, setCity] = React.useState(emp ? emp.city : '');
@@ -226,14 +236,14 @@ function MEmpForm({ emp, pop, toast, push }) {
   const setEstadoReset = (uf) => { setEstado(uf); if (!window.cidadesDe(uf).includes(city)) setCity(''); };
   const save = () => {
     if (!name.trim() || !address.trim() || !city.trim() || !window.ADM_CONSTRUTORAS.some(c => c.id === construtora)) return toast('Preencha nome, endereço, cidade e construtora.');
-    window.Demo.save('ADM_EMP', emp, { name: name.trim(), address: address.trim(), city: city.trim(), state: estado, construtora, status, cover: emp?.cover || '#457B9D', delivery: emp?.delivery || 'A definir', units: emp?.units || 0 }); toast('Empreendimento salvo.'); pop();
+    window.Demo.save('ADM_EMP', emp, { name: name.trim(), address: address.trim(), city: city.trim(), state: estado, construtora, status, cover: emp?.cover || '#457B9D', delivery: emp?.delivery || 'A definir' }); toast('Empreendimento salvo.'); pop();
   };
   return (
     <window.Page large={false} title={isNew ? 'Novo' : 'Editar'} onBack={{ label: 'Empreendimentos', fn: pop }}
       right={<button className="tap" onClick={save} style={{ background: 'none', border: 0, color: 'var(--orange-600)', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>{isNew ? 'Criar' : 'Salvar'}</button>}>
       <window.Group header="Dados">
         <window.FInput label="Nome" value={name} onChange={setName} placeholder="Residencial Aurora" />
-        <window.FSelect label="Construtora" display={window.construtoraName(construtora)} onClick={() => setPick('construtora')} last />
+        <window.FSelect label="Construtora" display={construtora ? window.construtoraName(construtora) : 'Selecionar'} onClick={() => setPick('construtora')} last />
       </window.Group>
       <window.Group header="Localização">
         <window.FInput label="Endereço" value={address} onChange={setAddress} placeholder="Rua, número, bairro" />
@@ -243,8 +253,12 @@ function MEmpForm({ emp, pop, toast, push }) {
       <window.Group header="Situação">
         <window.FSelect label="Status" display={window.ADM_STATUS[status].label} onClick={() => setPick('status')} last />
       </window.Group>
+      <window.Group header="Imóveis" footer={isNew ? 'Salve o empreendimento para cadastrar seus imóveis.' : 'A quantidade é calculada a partir dos imóveis cadastrados neste empreendimento.'}>
+        {isNew ? <window.Row title="Imóveis cadastrados" value="0" last /> :
+          <window.Row title="Imóveis cadastrados" value={window.ADM_IMOVEIS.filter(i => i.emp === emp.id).length} sub="Consultar e cadastrar imóveis" chevron last onClick={() => push({ key: 'imoveis', empId: emp.id })} />}
+      </window.Group>
       {!isNew && <window.Group><window.Row icon={<window.MIc.trash s={18} />} iconBg="var(--red-100)" iconColor="var(--red)" title="Remover empreendimento" danger last onClick={() => { const error = window.Demo.remove('ADM_EMP', emp); if (error) return toast(error); toast('Empreendimento removido.'); pop(); }} /></window.Group>}
-      <window.Picker open={pick === 'construtora'} onClose={() => setPick(null)} title="Construtora" value={construtora} onPick={setConstrutora} options={window.ADM_CONSTRUTORAS.map(c => ({ v: c.id, l: c.name, sub: c.cnpj }))} />
+      <window.Picker open={pick === 'construtora'} onClose={() => setPick(null)} title="Construtora" value={construtora} onPick={setConstrutora} searchable searchPlaceholder="Buscar construtora por nome ou CNPJ" options={window.ADM_CONSTRUTORAS.map(c => ({ v: c.id, l: c.name, sub: c.cnpj }))} />
       <window.Picker open={pick === 'estado'} onClose={() => setPick(null)} title="Estado" value={estado} onPick={setEstadoReset} options={window.ESTADOS.map(uf => ({ v: uf, l: uf }))} />
       <window.Picker open={pick === 'cidade'} onClose={() => setPick(null)} title="Cidade" value={city} onPick={setCity} options={window.cidadesDe(estado).map(c => ({ v: c, l: c }))} />
       <window.Picker open={pick === 'status'} onClose={() => setPick(null)} title="Situação" value={status} onPick={setStatus} options={[{ v: 'planning', l: 'Planejamento' }, { v: 'construction', l: 'Em obra' }, { v: 'delivered', l: 'Entregue' }]} />

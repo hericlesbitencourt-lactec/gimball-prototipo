@@ -18,21 +18,24 @@ function Page({ title, sub, onBack, right, children, large = true, bottomPad = 9
 }
 
 /* ───────── INÍCIO ───────── */
-function MInicio({ go, push }) {
+function MInicio({ go, push, role = 'admin' }) {
+  const engineer = role === 'engenheiro';
+  const plants = window.technicalPlants(role);
   return (
-    <Page title="Início" sub="Administração">
-      <div style={{ padding: "0 18px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}><window.GMark size={26} /><span className="demo-label">DEMONSTRAÇÃO</span></div>
+    <Page title="Início" sub={engineer ? 'Engenharia' : 'Administração'}>
+      <div style={{ padding: "0 18px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}><window.GMark size={26} /><span className="demo-label">{engineer ? 'Engenheiro' : 'Administrador'}</span></div>
       <div style={{ padding: '4px 16px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 11, marginBottom: 22 }}>
-        <window.Tile label="Usuários" value={window.ADM_USERS.length} sub={`${window.ADM_USERS.filter(u => u.role === "morador").length} moradores`} icon={<window.MIc.users s={18} />} tint="#7A4FB0" bg="#EFE8F8" />
-        <window.Tile label="Imóveis" value={window.ADM_IMOVEIS.length} sub="Unidades cadastradas" icon={<window.MIc.home s={18} />} tint="var(--orange)" bg="var(--orange-100)" />
-        <window.Tile label="Empreendimentos" value={window.ADM_EMP.length} sub="Empreendimentos" icon={<window.MIc.building s={18} />} tint="#2C7BB0" bg="#E6F1F8" />
-        <window.Tile label="Plantas" value={window.ADM_PLANTAS.length} sub={`${window.ADM_PLANTAS.filter(p => p.status === "available").length} disponíveis`} icon={<window.MIc.cube s={18} />} tint="var(--green)" bg="var(--green-100)" />
+        {!engineer && <window.Tile label="Usuários" value={window.ADM_USERS.length} sub={`${window.ADM_USERS.filter(u => u.role === "morador").length} moradores`} icon={<window.MIc.users s={18} />} tint="#7A4FB0" bg="#EFE8F8" />}
+        <window.Tile label="Imóveis" value={window.ADM_IMOVEIS.length} sub="Imóveis cadastrados" icon={<window.MIc.home s={18} />} tint="var(--orange)" bg="var(--orange-100)" />
+        {!engineer && <window.Tile label="Empreendimentos" value={window.ADM_EMP.length} sub="Empreendimentos" icon={<window.MIc.building s={18} />} tint="#2C7BB0" bg="#E6F1F8" />}
+        <window.Tile label="Plantas" value={plants.length} sub={`${plants.filter(p => p.status === "available").length} disponíveis`} icon={<window.MIc.cube s={18} />} tint="var(--green)" bg="var(--green-100)" />
       </div>
 
-      <window.Group header="Gestão">
-        <window.Row icon={<window.MIc.users s={18} />} iconBg="#EFE8F8" iconColor="#7A4FB0" title="Usuários" sub="Contas e papéis de acesso" chevron onClick={() => push({ key: 'usersList' })} />
-        <window.Row icon={<window.MIc.building s={18} />} iconBg="#E6F1F8" iconColor="#2C7BB0" title="Empreendimentos" sub="Obras e condomínios" chevron onClick={() => push({ key: 'empList' })} />
-        <window.Row icon={<window.MIc.home s={18} />} iconBg="var(--orange-100)" iconColor="var(--orange-600)" title="Imóveis" sub="Unidades autônomas" chevron onClick={() => go('imoveis')} />
+      <window.Group header={engineer ? 'Área técnica' : 'Gestão'}>
+        {!engineer && <window.Row icon={<window.MIc.users s={18} />} iconBg="#EFE8F8" iconColor="#7A4FB0" title="Usuários" sub="Contas e papéis de acesso" chevron onClick={() => push({ key: 'usersList' })} />}
+        {!engineer && <window.Row icon={<window.MIc.edit s={18} />} iconBg="var(--amber-100)" iconColor="var(--amber)" title="Solicitações cadastrais" sub="Dados pessoais para revisão" trailing={<window.Badge>{window.pendingProfileCount()}</window.Badge>} chevron onClick={() => push({ key: 'profileRequests' })} />}
+        {!engineer && <window.Row icon={<window.MIc.building s={18} />} iconBg="#E6F1F8" iconColor="#2C7BB0" title="Empreendimentos" sub="Obras e condomínios" chevron onClick={() => push({ key: 'empList' })} />}
+        <window.Row icon={<window.MIc.home s={18} />} iconBg="var(--orange-100)" iconColor="var(--orange-600)" title="Imóveis" sub="Cadastros e projetos técnicos" chevron onClick={() => go('imoveis')} />
         <window.Row icon={<window.MIc.cube s={18} />} iconBg="var(--green-100)" iconColor="var(--green)" title="Plantas" sub="Modelos 3D técnicos" chevron last onClick={() => go('plantas')} />
       </window.Group>
     </Page>
@@ -49,7 +52,7 @@ function MUsersList({ push, pop }) {
   rows.forEach(u => byRole[u.role].push(u));
   const labels = { admin: 'Administradores', engenheiro: 'Engenheiros', morador: 'Moradores' };
   return (
-    <Page title="Usuários" sub={`${window.ADM_USERS.length} contas de demonstração`} onBack={{ label: 'Início', fn: pop }}
+    <Page title="Usuários" sub={`${window.ADM_USERS.length} contas`} onBack={{ label: 'Início', fn: pop }}
       right={<window.NavBtn icon={<window.MIc.plus s={20} />} accent label="Novo" onClick={() => push({ key: 'userForm' })} />}>
       <Search value={q} onChange={setQ} placeholder="Buscar nome ou e-mail" />
       <window.Segment value={role} set={setRole} opts={[['all', 'Todos'], ['admin', 'Admin'], ['engenheiro', 'Engenheiro'], ['morador', 'Morador']]} />
@@ -83,7 +86,6 @@ function MUserForm({ user, pop, toast }) {
   const [createdEmail, setCreatedEmail] = mState(null);
 
   const roleLabel = window.ROLE_BADGE[role].label;
-  const statusLabel = window.ADM_STATUS[status].label;
   const save = () => {
     if (!name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return toast('Informe nome e e-mail válido.');
     if (window.ADM_USERS.some(u => u.id !== user?.id && u.email.toLowerCase() === email.trim().toLowerCase())) return toast('Este e-mail já está cadastrado.');
@@ -96,7 +98,7 @@ function MUserForm({ user, pop, toast }) {
   if (createdEmail) return (
     <Page large={false} title="Usuário criado" onBack={{ label: 'Usuários', fn: pop }}>
       <window.EmailNotice title="E-mail de confirmação enviado" email={createdEmail}>
-        <p style={{ fontSize: 14, color: 'var(--slate)', lineHeight: 1.6 }}>O cadastro de <strong>{name.trim()}</strong> foi concluído na demonstração. O usuário deverá confirmar o endereço de e-mail para concluir a ativação da conta na versão integrada.</p>
+        <p style={{ fontSize: 14, color: 'var(--slate)', lineHeight: 1.6 }}>O cadastro de <strong>{name.trim()}</strong> foi concluído. O usuário deverá confirmar o endereço de e-mail para concluir a ativação da conta.</p>
         <p style={{ fontSize: 13, color: 'var(--slate)', lineHeight: 1.6 }}>Se necessário, a opção de reenviar a confirmação estará disponível nas ações da conta.</p>
         <window.Btn block onClick={pop} style={{ marginTop: 24 }}>Concluir</window.Btn>
       </window.EmailNotice>
@@ -122,11 +124,11 @@ function MUserForm({ user, pop, toast }) {
 
       <window.Group header="Acesso" footer={role === 'morador' ? 'Moradores só enxergam o as-built dos imóveis vinculados abaixo.' : role === 'engenheiro' ? 'Engenheiros gerenciam plantas e veem projeto + as-built.' : 'Acesso total ao painel administrativo.'}>
         <window.FSelect label="Papel" display={roleLabel} onClick={() => setPick('role')} />
-        <window.FSelect label="Status" display={statusLabel} onClick={() => setPick('status')} last />
+        <window.Row title="Status" trailing={<window.SPill s={status} />} last />
       </window.Group>
 
       {role === 'morador' && (
-        <window.Group header={`Imóveis vinculados (${linked.length})`} footer="Use a busca para encontrar a unidade; a base pode ter milhares de imóveis.">
+        <window.Group header={`Imóveis vinculados (${linked.length})`} footer="Use a busca para encontrar o imóvel; a base pode ter milhares de imóveis.">
           {linked.map(id => {
             const im = window.ADM_IMOVEIS.find(i => i.id === id);
             if (!im) return null;
@@ -136,18 +138,18 @@ function MUserForm({ user, pop, toast }) {
             );
           })}
           <window.Row icon={<window.MIc.plus s={18} />} iconBg="var(--orange-100)" iconColor="var(--orange-600)"
-            title="Vincular imóvel" sub="Buscar por unidade ou empreendimento" last onClick={() => setLinkOpen(true)} />
+            title="Vincular imóvel" sub="Buscar por imóvel ou empreendimento" last onClick={() => setLinkOpen(true)} />
         </window.Group>
       )}
 
       {!isNew && (
-        <window.Group header="Ações da conta" footer="O reenvio de confirmação é simulado; nenhum e-mail é enviado. Alterar o status preserva o cadastro e os vínculos.">
+        <window.Group header="Ações da conta" footer="A desativação preserva o cadastro e os imóveis vinculados.">
           <window.Row icon={<window.MIc.user s={18} />} title={status === 'active' ? 'Desativar usuário' : 'Reativar usuário'}
             confirmation={{ title: status === 'active' ? 'Desativar usuário?' : 'Reativar usuário?', body: status === 'active' ? 'O usuário perderá o acesso ao aplicativo. O cadastro e os imóveis vinculados serão preservados. A alteração do status é aplicada imediatamente.' : 'O usuário poderá acessar o aplicativo novamente. A alteração do status é aplicada imediatamente.', action: status === 'active' ? 'Desativar' : 'Reativar' }}
             onClick={() => { const next = status === 'active' ? 'inactive' : 'active'; window.Demo.save('ADM_USERS', user, { status: next }); setStatus(next); toast(next === 'inactive' ? 'Usuário desativado.' : 'Usuário reativado.'); }} />
           <window.Row icon={<window.MIc.bell s={18} />} title="Reenviar e-mail de confirmação" sub={user.email} last
-            confirmation={{ title: 'Reenviar confirmação?', body: 'Será simulado o reenvio para ' + user.email + '. Nenhum e-mail real será enviado.', action: 'Simular reenvio' }}
-            onClick={() => { window.Demo.save('ADM_USERS', user, { confirmationResentAt: new Date().toISOString() }); toast('Reenvio de confirmação simulado. Nenhum e-mail foi enviado.'); }} />
+            confirmation={{ title: 'Reenviar confirmação?', body: 'Reenviar as instruções de confirmação para ' + user.email + '?', action: 'Reenviar confirmação' }}
+            onClick={() => { window.Demo.save('ADM_USERS', user, { confirmationResentAt: new Date().toISOString() }); toast('Instruções de confirmação reenviadas.'); }} />
         </window.Group>
       )}
 
@@ -159,8 +161,6 @@ function MUserForm({ user, pop, toast }) {
 
       <window.Picker open={pick === 'role'} onClose={() => setPick(null)} title="Papel de acesso" value={role} onPick={setRole}
         options={[{ v: 'morador', l: 'Morador', sub: 'App AR · vê apenas as-built' }, { v: 'engenheiro', l: 'Engenheiro', sub: 'Gerencia plantas · vê projeto' }, { v: 'admin', l: 'Administrador', sub: 'Acesso total' }]} />
-      <window.Picker open={pick === 'status'} onClose={() => setPick(null)} title="Status" value={status} onPick={setStatus}
-        options={[{ v: 'active', l: 'Ativo', sub: 'Pode acessar o app' }, { v: 'inactive', l: 'Inativo', sub: 'Acesso bloqueado' }]} />
       <LinkImovelSheet open={linkOpen} onClose={() => setLinkOpen(false)} linked={linked}
         onAdd={(id) => setLinked(l => [...l, id])} />
     </Page>
@@ -179,12 +179,12 @@ function LinkImovelSheet({ open, onClose, linked, onAdd }) {
   return (
     <window.Sheet open={open} onClose={onClose} title="Vincular imóvel" height="86%"
       footer={<window.Action variant="ghost" onClick={onClose}>Concluir</window.Action>}>
-      <Search value={q} onChange={setQ} placeholder="Buscar unidade ou empreendimento" />
+      <Search value={q} onChange={setQ} placeholder="Buscar imóvel ou empreendimento" />
       {term.length < 2 ? (
         <div style={{ textAlign: 'center', padding: '34px 40px', color: 'var(--slate)' }}>
           <div style={{ width: 52, height: 52, borderRadius: 15, background: '#EEF1F5', color: 'var(--slate-300)', display: 'grid', placeItems: 'center', margin: '0 auto 12px' }}><window.MIc.search s={24} /></div>
           <div style={{ fontSize: 14, fontWeight: 650, color: 'var(--ink)' }}>Digite para buscar</div>
-          <div style={{ fontSize: 12.5, marginTop: 4, lineHeight: 1.45 }}>Informe ao menos 2 caracteres da unidade ou do empreendimento.</div>
+          <div style={{ fontSize: 12.5, marginTop: 4, lineHeight: 1.45 }}>Informe ao menos 2 caracteres do imóvel ou do empreendimento.</div>
         </div>
       ) : results.length ? (
         <window.Group footer={results.length === 20 ? 'Mostrando os 20 primeiros resultados. Refine a busca.' : null}>
@@ -202,15 +202,16 @@ function LinkImovelSheet({ open, onClose, linked, onAdd }) {
 }
 
 /* ───────── IMÓVEIS (tab list) ───────── */
-function MImoveis({ push }) {
+function MImoveis({ push, pop, empId }) {
   const [q, setQ] = mState('');
-  const rows = window.ADM_IMOVEIS.filter(i => i.identifier.toLowerCase().includes(q.toLowerCase()) || window.empName(i.emp).toLowerCase().includes(q.toLowerCase()));
+  const units = window.ADM_IMOVEIS.filter(i => !empId || i.emp === empId);
+  const rows = units.filter(i => i.identifier.toLowerCase().includes(q.toLowerCase()) || window.empName(i.emp).toLowerCase().includes(q.toLowerCase()));
   const byEmp = {};
   rows.forEach(i => { (byEmp[i.emp] = byEmp[i.emp] || []).push(i); });
   return (
-    <Page title="Imóveis" sub={`${window.ADM_IMOVEIS.length} unidades`}
-      right={<window.NavBtn icon={<window.MIc.plus s={20} />} accent label="Novo" onClick={() => push({ key: 'imovelForm' })} />}>
-      <Search value={q} onChange={setQ} placeholder="Buscar unidade ou empreendimento" />
+    <Page title="Imóveis" sub={empId ? window.empName(empId) : `${units.length} imóveis`} onBack={empId ? { label: 'Empreendimento', fn: pop } : undefined}
+      right={<window.NavBtn icon={<window.MIc.plus s={20} />} accent label="Novo" onClick={() => push({ key: 'imovelForm', empId })} />}>
+      <Search value={q} onChange={setQ} placeholder="Buscar imóvel ou empreendimento" />
       {Object.keys(byEmp).map(eid => (
         <window.Group key={eid} header={window.empName(eid)}>
           {byEmp[eid].map((i, idx) => (
@@ -220,15 +221,16 @@ function MImoveis({ push }) {
           ))}
         </window.Group>
       ))}
-      {rows.length === 0 && <window.EmptyState icon={<window.MIc.home s={30} />} title="Nenhum imóvel" body="Ajuste a busca." />}
+      {rows.length === 0 && <window.EmptyState icon={<window.MIc.home s={30} />} title="Nenhum imóvel" body={empId && !units.length ? 'Este empreendimento ainda não tem imóveis cadastrados.' : 'Ajuste a busca.'}
+        action={empId && !units.length ? <window.Btn onClick={() => push({ key: 'imovelForm', empId })}>Cadastrar imóvel</window.Btn> : undefined} />}
     </Page>
   );
 }
 
 /* ───────── IMÓVEL (detail) ───────── */
-function MImovelDetail({ imovel, pop, push, toast }) {
+function MImovelDetail({ imovel, pop, push, toast, role = 'admin' }) {
   const i = window.ADM_IMOVEIS.find(row => row.id === imovel.id) || imovel;
-  const plantas = window.ADM_PLANTAS.filter(p => p.imovel === i.id);
+  const plantas = window.technicalPlants(role).filter(p => p.imovel === i.id);
   return (
     <Page large={false} title={i.identifier} onBack={{ label: 'Imóveis', fn: pop }}
       right={<button className="tap" onClick={() => push({ key: 'imovelForm', imovel: i })} style={{ background: 'none', border: 0, color: 'var(--orange-600)', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>Editar</button>}>
@@ -253,30 +255,30 @@ function MImovelDetail({ imovel, pop, push, toast }) {
             icon={<window.MIc.cube s={18} />} iconBg="var(--navy-900)" iconColor="#fff" title={p.name}
             sub={`${window.DISC_META[p.disc].name} · ${p.marker ? 'marcador id ' + p.marker.code : 'sem marcador'}`}
             trailing={<window.SPill s={p.status} />} chevron />
-        )) : <window.Row title="Sem plantas" sub="Envie um modelo 3D para esta unidade" last />}
+        )) : <window.Row title="Sem plantas" sub="Envie um modelo 3D para este imóvel" last />}
       </window.Group>
     </Page>
   );
 }
 
 /* ───────── IMÓVEL (form) ───────── */
-function MImovelForm({ imovel, pop, toast }) {
+function MImovelForm({ imovel, initialEmp, pop, toast }) {
   const isNew = !imovel;
   const [ident, setIdent] = mState(imovel ? imovel.identifier : '');
   const [area, setArea] = mState(imovel ? imovel.area : '');
   const [typ, setTyp] = mState(imovel ? imovel.typology : '');
-  const [emp, setEmp] = mState(imovel ? imovel.emp : 'e1');
+  const [emp, setEmp] = mState(imovel ? imovel.emp : initialEmp || 'e1');
   const [status, setStatus] = mState(imovel ? imovel.status : 'construction');
   const [pick, setPick] = mState(null);
   const save = () => {
     if (!ident.trim() || !typ.trim() || !(Number(area.replace(',', '.')) > 0) || !window.ADM_EMP.some(e => e.id === emp)) return toast('Preencha identificação, tipologia, área válida e empreendimento.');
-    if (window.ADM_IMOVEIS.some(i => i.id !== imovel?.id && i.emp === emp && i.identifier.toLowerCase() === ident.trim().toLowerCase())) return toast('Esta unidade já está cadastrada.');
+    if (window.ADM_IMOVEIS.some(i => i.id !== imovel?.id && i.emp === emp && i.identifier.toLowerCase() === ident.trim().toLowerCase())) return toast('Este imóvel já está cadastrado.');
     window.Demo.save('ADM_IMOVEIS', imovel, { identifier: ident.trim(), area, typology: typ.trim(), emp, status, floor: imovel?.floor ?? 0 }); toast('Imóvel salvo.'); pop();
   };
   return (
     <Page large={false} title={isNew ? 'Novo imóvel' : 'Editar imóvel'} onBack={{ label: 'Voltar', fn: pop }}
       right={<button className="tap" onClick={save} style={{ background: 'none', border: 0, color: 'var(--orange-600)', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>{isNew ? 'Criar' : 'Salvar'}</button>}>
-      <window.Group header="Identificação" footer="É assim que o morador verá a unidade no app.">
+      <window.Group header="Identificação" footer="É assim que o morador verá o imóvel no app.">
         <window.FSelect label="Empreendimento" display={window.empName(emp)} onClick={() => setPick('emp')} />
         <window.FInput label="Identificação" value={ident} onChange={setIdent} placeholder="Torre B · Apto 1204" last />
       </window.Group>
@@ -286,7 +288,7 @@ function MImovelForm({ imovel, pop, toast }) {
         <window.FSelect label="Status" display={window.ADM_STATUS[status].label} onClick={() => setPick('status')} last />
       </window.Group>
       {!isNew && <window.Group><window.Row icon={<window.MIc.trash s={18} />} iconBg="var(--red-100)" iconColor="var(--red)" title="Remover imóvel" danger last onClick={() => { const error = window.Demo.remove('ADM_IMOVEIS', imovel); if (error) return toast(error); toast('Imóvel removido.'); pop(); }} /></window.Group>}
-      <window.Picker open={pick === 'emp'} onClose={() => setPick(null)} title="Empreendimento" value={emp} onPick={setEmp} options={window.ADM_EMP.map(e => ({ v: e.id, l: e.name }))} />
+      <window.Picker open={pick === 'emp'} onClose={() => setPick(null)} title="Empreendimento" value={emp} onPick={setEmp} searchable searchPlaceholder="Buscar empreendimento" options={window.ADM_EMP.map(e => ({ v: e.id, l: e.name, sub: `${window.construtoraName(e.construtora)} · ${e.city}/${e.state}` }))} />
       <window.Picker open={pick === 'status'} onClose={() => setPick(null)} title="Status" value={status} onPick={setStatus} options={[{ v: 'construction', l: 'Em obra' }, { v: 'delivered', l: 'Entregue' }]} />
     </Page>
   );

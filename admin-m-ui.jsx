@@ -91,7 +91,7 @@ function Group({ header, footer, children, style = {} }) {
 function Row({ left, icon, iconBg, iconColor, title, sub, value, valueColor, chevron, onClick, danger, trailing, last, confirmation }) {
   const [confirming, setConfirming] = React.useState(false);
   const prompt = confirmation || (danger && title.startsWith('Remover') ? {
-    title: title + '?', body: 'Este cadastro será removido da demonstração. Esta ação não pode ser desfeita.', action: 'Remover',
+    title: title + '?', body: 'Este cadastro será removido. Esta ação não pode ser desfeita.', action: 'Remover',
   } : null);
   const activate = () => {
     if (prompt) setConfirming(true);
@@ -219,15 +219,22 @@ function FToggle({ label, on, onToggle, last, disabled }) {
 }
 
 /* picker sheet (single choice) */
-function Picker({ open, onClose, title, options, value, onPick }) {
+function Picker({ open, onClose, title, options, value, onPick, searchable = false, searchPlaceholder }) {
+  const [query, setQuery] = React.useState('');
+  React.useEffect(() => { if (!open) setQuery(''); }, [open]);
+  const normalize = text => String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const term = normalize(query);
+  const rows = searchable && term ? options.filter(o => normalize(o.l + ' ' + (o.sub || '')).includes(term)) : options;
   return (
     <Sheet open={open} onClose={onClose} title={title} height="70%">
+      {searchable && <Search value={query} onChange={setQuery} placeholder={searchPlaceholder || 'Buscar opção'} />}
       <window.Group>
-        {options.map((o, i) => (
-          <Row key={o.v} title={o.l} sub={o.sub} last={i === options.length - 1} onClick={() => { onPick(o.v); onClose(); }}
+        {rows.map((o, i) => (
+          <Row key={o.v} title={o.l} sub={o.sub} last={i === rows.length - 1} onClick={() => { onPick(o.v); onClose(); }}
             trailing={value === o.v ? <span style={{ color: 'var(--orange)', display: 'flex' }}><window.IcCheck s={20} w={2.4} /></span> : null} />
         ))}
       </window.Group>
+      {!rows.length && <window.EmptyState icon={<MIc.search s={28} />} title="Nenhum resultado" body={searchable ? 'Tente outro termo ou limpe a busca.' : 'Não há opções cadastradas.'} />}
     </Sheet>
   );
 }

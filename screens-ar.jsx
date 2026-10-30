@@ -114,9 +114,9 @@ function CameraScreen({ plant, propId, typeId, onBack, onAnchored, forceState })
   const locked = phase === 'detected' || phase === 'loading';
 
   const caption = {
-    searching: ['Enquadre o marcador', 'Na versão final, a câmera reconhecerá o AprilTag. Aqui, escolha um resultado para explorar o fluxo.'],
-    detected: ['Reconhecimento simulado', `AprilTag identificado · ${plant ? plant.tag : 'tag36h11'}`],
-    loading: ['Preparando demonstração…', plant ? plant.file : 'modelo.usdz'],
+    searching: ['Enquadre o marcador', 'Mantenha o marcador inteiro no enquadramento. Abra a prévia para explorar o modelo.'],
+    detected: ['Referência selecionada', `AprilTag identificado · ${plant ? plant.tag : 'tag36h11'}`],
+    loading: ['Carregando prévia…', plant ? plant.file : 'modelo.usdz'],
     error: ['Não encontramos o marcador', 'Verifique a iluminação e mantenha o AprilTag inteiro no enquadramento.'],
   }[phase];
 
@@ -138,7 +138,7 @@ function CameraScreen({ plant, propId, typeId, onBack, onAnchored, forceState })
         <RoundBtn label="Ajuda" icon={<window.IcHelp s={22} />} onClick={() => setHelp(true)} />
       </GlassTop>
 
-      <div style={{ position: "absolute", top: 124, left: 0, right: 0, textAlign: "center", color: "#fff", fontSize: 11, fontWeight: 700, letterSpacing: ".08em" }}>DEMONSTRAÇÃO · CÂMERA SIMULADA</div>
+      <div style={{ position: "absolute", top: 124, left: 0, right: 0, textAlign: "center", color: "#fff", fontSize: 11, fontWeight: 700, letterSpacing: ".08em" }}>PRÉVIA AR</div>
       {/* center reticle + marker */}
       <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
         <div style={{ position: 'relative', display: 'grid', placeItems: 'center' }}>
@@ -184,8 +184,8 @@ function CameraScreen({ plant, propId, typeId, onBack, onAnchored, forceState })
           <div className={phase === 'loading' ? 'mono' : ''} style={{ fontSize: 12.5, color: 'rgba(255,255,255,.66)', lineHeight: 1.45, padding: '0 6px' }}>{caption[1]}</div>
 
           {phase === 'searching' && <div style={{ marginTop: 14, display: 'grid', gap: 8 }}>
-            <window.Btn block onClick={() => setPhase('detected')}>Simular reconhecimento</window.Btn>
-            <window.Btn block variant="ghost" style={{ color: '#fff' }} onClick={() => setPhase('error')}>Simular falha de leitura</window.Btn>
+            <window.Btn block onClick={() => setPhase('detected')}>Abrir prévia</window.Btn>
+            <window.Btn block variant="ghost" style={{ color: '#fff' }} onClick={() => setPhase('error')}>Não consigo ler o marcador</window.Btn>
           </div>}
           {phase === 'loading' && (
             <div style={{ marginTop: 13, height: 5, borderRadius: 99, background: 'rgba(255,255,255,.14)', overflow: 'hidden' }}>
@@ -220,7 +220,7 @@ function HelpSheet({ onClose }) {
               É um <b>marcador físico</b> de referência fixado no ambiente. A câmera o reconhece e usa sua posição e tamanho real para <b>ancorar e escalar</b> o modelo 3D corretamente no espaço.
             </div>
             <div style={{ fontSize: 13, color: 'var(--slate)', lineHeight: 1.5, marginTop: 10 }}>
-              O marcador <b>não é</b> a planta; ele apenas indica onde o modelo deve aparecer. Na versão final, a busca será automática. Este protótipo usa uma foto e simula o reconhecimento, sem acessar sua câmera.
+              O marcador <b>não é</b> a planta; ele apenas indica onde o modelo deve aparecer. Esta prévia usa um ambiente de referência, sem acessar a câmera ou reconhecer marcadores reais.
             </div>
           </div>
         </div>

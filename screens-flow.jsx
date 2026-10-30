@@ -1,104 +1,64 @@
-// screens-flow.jsx - Login · Dashboard · Property detail · Plan selection
-
-/* ───────────────────── LOGIN ───────────────────── */
 function LoginScreen({ onLogin }) {
-  const [email, setEmail] = React.useState('marina.alves@email.com');
-  const [pass, setPass] = React.useState('demo1234');
-  const [show, setShow] = React.useState(false);
-  const [busy, setBusy] = React.useState(false);
-  const [err, setErr] = React.useState(false);
+  const [role, setRole] = React.useState('morador');
+  const [email, setEmail] = React.useState(() => window.residentUser().email || '');
+  const [password, setPassword] = React.useState('demo1234');
+  const [showPassword, setShowPassword] = React.useState(false);
   const [recovery, setRecovery] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState('');
   const timer = React.useRef();
   React.useEffect(() => () => clearTimeout(timer.current), []);
-
-  const submit = () => {
-    if (busy) return;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) || pass.length < 6) { setErr(true); return; }
-    setErr(false); setBusy(true);
-    timer.current = setTimeout(() => onLogin(), 700);
+  const chooseRole = next => {
+    if (busy || next === role) return;
+    const ids = { admin: 'u3', morador: 'u1', engenheiro: 'u2' };
+    setRole(next); setEmail(window.ADM_USERS.find(u => u.id === ids[next])?.email || '');
+    setPassword('demo1234'); setShowPassword(false); setError('');
   };
-
-  const field = (label, value, set, type, node) => (
-    <label style={{ display: 'block', marginBottom: 14 }}>
-      <div className="mono" style={{ fontSize: 11, letterSpacing: '.06em', textTransform: 'uppercase',
-        color: 'var(--slate)', marginBottom: 7 }}>{label}</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fff',
-        border: `1px solid ${err ? 'rgba(210,80,60,.7)' : 'var(--line)'}`, borderRadius: 14, padding: '0 14px' }}>
-        <input value={value} type={type} spellCheck={false}
-          onChange={e => set(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && submit()}
-          style={{ flex: 1, background: 'transparent', border: 0, outline: 'none', color: 'var(--ink)',
-            fontFamily: 'var(--sans)', fontSize: 15.5, fontWeight: 500, padding: '15px 0' }} />
-        {node}
-      </div>
-    </label>
-  );
-
+  const submit = e => {
+    e.preventDefault();
+    if (busy) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setError('Informe um e-mail válido.');
+    if (password.length < 8) return setError('Informe uma senha com pelo menos 8 caracteres.');
+    setError(''); setBusy(true);
+    timer.current = setTimeout(() => {
+      if (role === 'admin') window.location.href = 'admin.html';
+      else if (role === 'engenheiro') window.location.href = 'admin.html?perfil=engenheiro';
+      else onLogin();
+    }, 700);
+  };
   if (recovery) return <RecoveryScreen initialEmail={email} onBack={() => setRecovery(false)}
-    onReset={(address, password) => { setEmail(address); setPass(password); setErr(false); setRecovery(false); }} />;
-
-  return (
-    <window.Screen pad={false}>
-      <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column',
-        background: 'var(--bg)',
-        position: 'relative' }}>
-        <div style={{ position: 'relative', padding: '0 26px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ height: 118 }} />
-          <div className="fadeup" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 30 }}>
-            <window.GMark size={48} />
-            <div className="mono" style={{ marginTop: 12, fontSize: 11.5, letterSpacing: '.22em',
-              color: 'var(--slate)', textTransform: 'uppercase' }}>AR · As-built · BIM</div>
-          </div>
-
-          <div className="fadeup" style={{ animationDelay: '.08s' }}>
-            <div style={{ fontSize: 23, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-.02em', marginBottom: 4 }}>Bem-vindo de volta</div>
-            <div style={{ fontSize: 14.5, color: 'var(--slate)', marginBottom: 24 }}>Acesse as plantas técnicas do seu imóvel.</div>
-
-            {field('E-mail', email, setEmail, 'email', null)}
-            {field('Senha', pass, setPass, show ? 'text' : 'password',
-              <button onClick={() => setShow(s => !s)} aria-label="Mostrar senha"
-                style={{ background: 'none', border: 0, color: 'var(--slate)', cursor: 'pointer', padding: 4, display: 'flex' }}>
-                {show ? <window.IcEyeOff s={20} /> : <window.IcEye s={20} />}
-              </button>)}
-
-            {err && <div style={{ display: 'flex', alignItems: 'center', gap: 7, color: 'var(--red)', fontSize: 13, fontWeight: 600, margin: '2px 2px 14px' }}>
-              <window.IcAlert s={16} /> Verifique seu e-mail e senha.</div>}
-
-            <window.Btn block size="lg" onClick={submit} disabled={busy}
-              style={{ marginTop: 8 }}>
-              {busy ? <><window.Spinner size={20} color="#fff" /> Entrando…</> : 'Entrar'}
-            </window.Btn>
-
-            <div style={{ textAlign: 'center', marginTop: 18 }}>
-              <button type="button" disabled={busy} onClick={() => setRecovery(true)} style={{ background: 'none', border: 0, cursor: 'pointer', color: 'var(--slate)', fontSize: 13.5, fontWeight: 600 }}>Esqueci minha senha</button>
-            </div>
-
-            {/* perfis de acesso */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '26px 0 14px' }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--line)' }}></div>
-              <span className="mono" style={{ fontSize: 10.5, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--slate)', whiteSpace: 'nowrap', flex: '0 0 auto' }}>Entrar como</span>
-              <div style={{ flex: 1, height: 1, background: 'var(--line)' }}></div>
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button className="tap" onClick={submit} style={{ flex: 1, padding: '13px 8px', borderRadius: 13,
-                border: '1px solid rgba(232,132,58,.55)', background: 'rgba(232,132,58,.14)', color: 'var(--ink)',
-                fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, cursor: 'pointer', textAlign: 'center' }}>Morador</button>
-              <a href="admin.html" className="tap" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: '13px 8px', borderRadius: 13, border: '1px solid var(--line)', background: '#fff',
-                color: 'var(--ink)', fontSize: 14, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>Administrador</a>
-            </div>
-          </div>
-
-          <div style={{ flex: 1 }} />
-          <div className="mono" style={{ textAlign: 'center', fontSize: 10.5, letterSpacing: '.04em',
-            color: 'var(--slate)', padding: '24px 0' }}>Demonstração · dados fictícios</div>
+    onReset={(address, newPassword) => { setEmail(address); setPassword(newPassword); setShowPassword(false); setError(''); setRecovery(false); }} />;
+  const inputStyle = { width: '100%', minWidth: 0, padding: '14px 12px', border: 0, outline: 'none', background: 'transparent', color: 'var(--ink)' };
+  return <window.Screen pad={false}>
+    <div style={{ minHeight: '100%', padding: '80px 24px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 26 }}><window.GMark size={44} /></div>
+      <h1 style={{ fontSize: 25, letterSpacing: '-.025em', margin: '0 0 8px' }}>Bem-vindo de volta</h1>
+      <p style={{ fontSize: 14, color: 'var(--slate)', lineHeight: 1.5, margin: '0 0 22px' }}>Acesse seus imóveis e projetos técnicos.</p>
+      <div role="group" aria-label="Perfil de acesso" style={{ marginBottom: 22 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--slate)', marginBottom: 8 }}>Perfil de acesso</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1.2fr', gap: 6 }}>
+          {[['admin', 'Administrador'], ['morador', 'Morador'], ['engenheiro', 'Engenheiro']].map(([id, label]) => <button type="button" key={id} className="tap" aria-pressed={role === id} disabled={busy} onClick={() => chooseRole(id)}
+            style={{ minHeight: 44, padding: '10px 3px', borderRadius: 12, border: '1px solid ' + (role === id ? 'var(--orange)' : 'var(--line)'), color: 'var(--ink)', background: role === id ? 'var(--orange-100)' : '#fff', fontSize: 12, fontWeight: 650, cursor: 'pointer' }}>{label}</button>)}
         </div>
       </div>
-    </window.Screen>
-  );
+      <form onSubmit={submit} noValidate>
+        <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--slate)', marginBottom: 18 }}>E-mail
+          <div style={{ marginTop: 8, border: '1px solid var(--line)', borderRadius: 14, background: '#fff' }}><input type="email" autoComplete="username" value={email} aria-invalid={!!error} disabled={busy} onChange={e => { setEmail(e.target.value); setError(''); }} style={inputStyle} /></div>
+        </label>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--slate)' }}><label htmlFor="login-password">Senha</label>
+          <div style={{ display: 'flex', alignItems: 'center', marginTop: 8, border: '1px solid var(--line)', borderRadius: 14, background: '#fff' }}>
+            <input id="login-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} aria-invalid={!!error} disabled={busy} onChange={e => { setPassword(e.target.value); setError(''); }} style={inputStyle} />
+            <button type="button" aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} aria-pressed={showPassword} disabled={busy} onClick={() => setShowPassword(v => !v)} style={{ display: 'grid', placeItems: 'center', width: 44, minHeight: 44, flexShrink: 0, padding: 8, border: 0, background: 'transparent', color: 'var(--slate)', cursor: 'pointer' }}>{showPassword ? <window.IcEyeOff s={20} /> : <window.IcEye s={20} />}</button>
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '8px 0 12px' }}><button type="button" disabled={busy} onClick={() => setRecovery(true)} style={{ padding: '10px 0 10px 12px', background: 'none', border: 0, color: 'var(--slate)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Esqueci minha senha</button></div>
+        {error && <p role="alert" style={{ color: 'var(--red)', fontSize: 13, lineHeight: 1.5 }}>{error}</p>}
+        <window.Btn type="submit" block size="lg" disabled={busy}>{busy ? <><window.Spinner size={18} color="#fff" /> Entrando…</> : 'Entrar'}</window.Btn>
+      </form>
+    </div>
+  </window.Screen>;
 }
 
-/* ───────────────────── DASHBOARD ───────────────────── */
 function RecoveryScreen({ initialEmail, onBack, onReset }) {
   const [step, setStep] = React.useState('request');
   const [email, setEmail] = React.useState(initialEmail);
@@ -142,13 +102,13 @@ function RecoveryScreen({ initialEmail, onBack, onReset }) {
           {error && <p id="recovery-error" role="alert" style={{ color: 'var(--red)', fontSize: 13 }}>{error}</p>}
           <window.Btn type="submit" block disabled={busy}>{busy ? <><window.Spinner size={18} color="#fff" /> Enviando…</> : 'Enviar instruções'}</window.Btn>
         </form>
-        <p className="demo-label" style={{ marginTop: 22, lineHeight: 1.6 }}>Envio simulado para apresentação do fluxo.</p>
+
       </div>}
       {step === 'sent' && <window.EmailNotice title="Confira seu e-mail" email={email}>
         <p style={{ fontSize: 14, color: 'var(--slate)', lineHeight: 1.6 }}>Se houver uma conta com esse endereço, você receberá um link para criar uma nova senha. Confira também a pasta de spam.</p>
-        {resent && <p role="status" style={{ fontSize: 13, color: 'var(--green)' }}>Reenvio simulado com sucesso.</p>}
+        {resent && <p role="status" style={{ fontSize: 13, color: 'var(--green)' }}>Instruções reenviadas.</p>}
         <div style={{ display: 'grid', gap: 12, marginTop: 24 }}>
-          <window.Btn block variant="dark" onClick={() => { setError(''); setStep('reset'); }}>Simular abertura do link</window.Btn>
+          <window.Btn block variant="dark" onClick={() => { setError(''); setStep('reset'); }}>Continuar para nova senha</window.Btn>
           <window.Btn block variant="ghost" disabled={busy || cooldown > 0} onClick={send}>{busy ? 'Reenviando…' : cooldown ? 'Reenviar em ' + cooldown + 's' : 'Reenviar instruções'}</window.Btn>
           <window.Btn block variant="soft" onClick={() => { setError(''); setStep('request'); }}>Corrigir e-mail</window.Btn>
           <window.Btn block variant="ghost" onClick={onBack}>Voltar ao login</window.Btn>
@@ -156,7 +116,7 @@ function RecoveryScreen({ initialEmail, onBack, onReset }) {
       </window.EmailNotice>}
       {step === 'reset' && <div className="fadeup" style={{ padding: '24px' }}>
         <h1 style={{ fontSize: 25 }}>Crie uma nova senha</h1>
-        <p style={{ color: 'var(--slate)', fontSize: 14, lineHeight: 1.6 }}>Use pelo menos 8 caracteres. Nesta demonstração, a senha será preenchida no login ao concluir.</p>
+        <p style={{ color: 'var(--slate)', fontSize: 14, lineHeight: 1.6 }}>Use pelo menos 8 caracteres para proteger seu acesso.</p>
         <form onSubmit={e => { e.preventDefault(); reset(); }} noValidate>
           <label style={{ fontSize: 14, fontWeight: 600 }}>Nova senha<input type={show ? 'text' : 'password'} autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} style={fieldStyle} /></label>
           <label style={{ fontSize: 14, fontWeight: 600 }}>Confirmar nova senha<input type={show ? 'text' : 'password'} autoComplete="new-password" value={confirm} onChange={e => setConfirm(e.target.value)} style={fieldStyle} /></label>
@@ -164,17 +124,17 @@ function RecoveryScreen({ initialEmail, onBack, onReset }) {
           {error && <p role="alert" style={{ color: 'var(--red)', fontSize: 13 }}>{error}</p>}
           <window.Btn type="submit" block disabled={busy}>{busy ? <><window.Spinner size={18} color="#fff" /> Salvando…</> : 'Salvar nova senha'}</window.Btn>
         </form>
-        <p className="demo-label" style={{ marginTop: 24, lineHeight: 1.6 }}>Link e redefinição simulados. Nenhuma credencial real é alterada.</p>
+
       </div>}
       {step === 'done' && <window.EmailNotice title="Senha redefinida" email={email}>
-        <p style={{ color: 'var(--slate)', fontSize: 14, lineHeight: 1.6 }}>Redefinição concluída na demonstração. Volte ao login para continuar.</p>
+        <p style={{ color: 'var(--slate)', fontSize: 14, lineHeight: 1.6 }}>Sua senha foi redefinida. Volte ao acesso para continuar.</p>
         <window.Btn block onClick={() => onReset(email, password)} style={{ marginTop: 24 }}>Voltar ao login</window.Btn>
       </window.EmailNotice>}
     </window.Screen>
   );
 }
 
-function DashboardScreen({ user, state, onOpen, onLogout }) {
+function DashboardScreen({ user, state, onOpen, onLogout, onProfile }) {
   const [scrolled, setScrolled] = React.useState(false);
   const props = window.residentProperties();
   const isEmpty = state === 'empty' || props.length === 0;
@@ -197,15 +157,15 @@ function DashboardScreen({ user, state, onOpen, onLogout }) {
             border: '1px solid var(--line)', background: '#fff', color: 'var(--slate)', display: 'grid', placeItems: 'center', cursor: 'pointer' }}>
             <window.IcLogout s={20} />
           </button>
-          <window.Avatar initials={user.initials} />
+          <button type="button" onClick={onProfile} aria-label="Meus dados" className="tap" style={{ border: 0, background: 'transparent', padding: 2, borderRadius: '50%', cursor: 'pointer' }}><window.Avatar initials={user.initials} /></button>
         </div>
       </div>
 
       <div style={{ padding: '4px 18px 0' }}>
-        <p className="demo-label">AMBIENTE DE DEMONSTRAÇÃO</p>
+
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '6px 2px 14px' }}>
           <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--slate)' }}>Meus imóveis</div>
-          <window.Badge color="var(--navy-700)" bg="#E9EEF4">{loading ? '—' : isEmpty ? 0 : props.length} unidades</window.Badge>
+          <window.Badge color="var(--navy-700)" bg="#E9EEF4">{loading ? '—' : isEmpty ? 0 : props.length} imóveis</window.Badge>
         </div>
 
         {loading && [0, 1, 2].map(i => (
@@ -282,7 +242,7 @@ function PropertyScreen({ propId, onBack, onOpenType }) {
 
   return (
     <window.Screen onScroll={e => setScrolled(e.target.scrollTop > 8)}>
-      <window.TopBar title={p.name} sub="Imóvel / Unidade" onBack={onBack} scrolled={scrolled} />
+      <window.TopBar title={p.name} sub="Imóvel" onBack={onBack} scrolled={scrolled} />
 
       <div className="fadeup" style={{ padding: '4px 18px 0' }}>
         {/* summary card */}
@@ -364,7 +324,7 @@ function PlansScreen({ propId, typeId, onBack, onView, onToast }) {
         <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--slate)', margin: '2px 2px 13px' }}>Plantas disponíveis</div>
 
         <div className="stagger">
-          {!visible.length && <window.EmptyState icon={<window.IcDoc s={28} />} title="Nenhuma planta liberada" body="A administração disponibilizará as plantas deste tipo de projeto para sua unidade." />}
+          {!visible.length && <window.EmptyState icon={<window.IcDoc s={28} />} title="Nenhuma planta liberada" body="A administração disponibilizará as plantas deste tipo de projeto para seu imóvel." />}
           {visible.map(pl => <PlantCard key={pl.id} pl={pl} onView={() => onView(pl)} onToast={onToast} />)}
         </div>
       </div>
@@ -402,7 +362,7 @@ function PlantCard({ pl, onView, onToast }) {
             {pl.status === 'pendente' ? 'Aguardando liberação' : 'Indisponível'}
           </window.Btn>
         )}
-        <window.Btn variant="ghost" disabled={!ok} onClick={() => onToast('info', 'Download demonstrativo. O modelo real ainda não está conectado.')}
+        <window.Btn variant="ghost" disabled={!ok} onClick={() => onToast('info', 'O arquivo não está disponível para download.')}
           aria-label="Baixar modelo" style={{ flex: '0 0 auto', padding: '13px 15px' }} icon={<window.IcDownload s={20} />} />
       </div>
 

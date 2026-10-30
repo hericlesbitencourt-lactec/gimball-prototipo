@@ -76,7 +76,7 @@ function ARViewScreen({ plant, propId, typeId, onExit, onBack }) {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
               <span style={{ width: 7, height: 7, borderRadius: 99, background: 'var(--green)', boxShadow: '0 0 8px var(--green)' }} />
-              <span className="mono" style={{ fontSize: 10.5, color: 'rgba(255,255,255,.7)', letterSpacing: '.02em' }}>Demonstração · sobreposição ilustrativa</span>
+              <span className="mono" style={{ fontSize: 10.5, color: 'rgba(255,255,255,.7)', letterSpacing: '.02em' }}>Prévia AR · Modelo ilustrativo</span>
             </div>
           </div>
         </div>
@@ -94,7 +94,7 @@ function ARViewScreen({ plant, propId, typeId, onExit, onBack }) {
             background: 'rgba(210,80,60,.18)', borderRadius: 15, padding: '10px 4px',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, color: '#ff9385' }}>
             <window.IcClose s={22} />
-            <span style={{ fontSize: 10.5, fontWeight: 600 }}>Sair</span>
+            <span style={{ fontSize: 10.5, fontWeight: 600 }}>Fechar AR</span>
           </button>
         </div>
       </div>

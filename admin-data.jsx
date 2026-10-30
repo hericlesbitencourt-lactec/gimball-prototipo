@@ -38,7 +38,7 @@ const PERM_MODULES = [
   { module: 'Imóveis', perms: [
     { code: 'construtoras.manage', desc: 'Gerir construtoras' },
     { code: 'empreendimentos.manage', desc: 'Gerir empreendimentos' },
-    { code: 'imoveis.manage', desc: 'Gerir imóveis/unidades' },
+    { code: 'imoveis.manage', desc: 'Gerir imóveis' },
     { code: 'vinculos.manage', desc: 'Vincular moradores a imóveis' },
   ]},
   { module: 'Plantas', perms: [
@@ -135,10 +135,17 @@ const ROLE_BADGE = {
 
 const empName = (id) => (ADM_EMP.find(e => e.id === id) || {}).name || '—';
 const imovelName = (id) => (ADM_IMOVEIS.find(i => i.id === id) || {}).identifier || '—';
+const ADM_PROFILE_REQUESTS = [];
+const PROFILE_REQUEST_STATUS = {
+  pending: { label: 'Pendente de análise', color: 'var(--amber)', bg: 'var(--amber-100)' },
+  awaiting_email: { label: 'Aguardando confirmação', color: 'var(--amber)', bg: 'var(--amber-100)' },
+  approved: { label: 'Aprovada', color: 'var(--green)', bg: 'var(--green-100)' },
+  rejected: { label: 'Recusada', color: 'var(--red)', bg: 'var(--red-100)' },
+};
 
 Object.assign(window, {
   ESTADOS, CIDADES, cidadesDe, ADM_CONSTRUTORAS, construtoraName,
   ADM_ROLES, PERM_MODULES, PERM_MATRIX,
-  ADM_USERS, ADM_EMP, ADM_IMOVEIS, ADM_PLANTAS, nextTagCode,
+  ADM_USERS, ADM_EMP, ADM_IMOVEIS, ADM_PLANTAS, ADM_PROFILE_REQUESTS, PROFILE_REQUEST_STATUS, nextTagCode,
   DISC_META, ADM_STATUS, ROLE_BADGE, empName, imovelName,
 });
