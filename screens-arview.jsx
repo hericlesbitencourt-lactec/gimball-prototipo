@@ -36,6 +36,8 @@ function ModelOverlay({ typeId, color }) {
 
 function ARViewScreen({ plant, propId, typeId, onExit, onBack }) {
   const t = window.projType(typeId);
+  const [opacity, setOpacity] = React.useState(0.85);
+  const [visible, setVisible] = React.useState(true);
   const modelColor = { hidro: '#5BB6E8', eletr: '#F0BE54', estru: '#CBD6E4' }[typeId];
 
   return (
@@ -48,7 +50,7 @@ function ARViewScreen({ plant, propId, typeId, onExit, onBack }) {
           {/* floor anchor shadow */}
           <div style={{ position: 'absolute', bottom: -26, width: 150, height: 26, borderRadius: '50%',
             background: 'radial-gradient(closest-side, rgba(0,0,0,.5), transparent)' }} />
-          <div style={{ transform: 'perspective(900px) rotateX(8deg) rotateY(-12deg)', animation: 'floatY 5s ease-in-out infinite' }}>
+          <div style={{ opacity: visible ? opacity : 0, transition: 'opacity .2s', transform: 'perspective(900px) rotateX(8deg) rotateY(-12deg)' }}>
             <ModelOverlay typeId={typeId} color={modelColor} />
           </div>
           {/* anchor tether to marker */}
@@ -74,17 +76,20 @@ function ARViewScreen({ plant, propId, typeId, onExit, onBack }) {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
               <span style={{ width: 7, height: 7, borderRadius: 99, background: 'var(--green)', boxShadow: '0 0 8px var(--green)' }} />
-              <span className="mono" style={{ fontSize: 10.5, color: 'rgba(255,255,255,.7)', letterSpacing: '.02em' }}>Modelo ancorado pelo AprilTag</span>
+              <span className="mono" style={{ fontSize: 10.5, color: 'rgba(255,255,255,.7)', letterSpacing: '.02em' }}>Demonstração · sobreposição ilustrativa</span>
             </div>
           </div>
         </div>
       </div>
 
+      <div style={{ position: "absolute", top: 148, left: 18, right: 18, color: "#fff", fontSize: 12, lineHeight: 1.5 }}>Prévia de {t.name.toLowerCase()}. Sem escala real ou rastreamento espacial.</div>
       {/* control bar */}
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 40, padding: '0 14px 38px' }}>
+        <div style={{ color: "#fff", background: "rgba(11,18,28,.85)", borderRadius: 14, padding: 14, marginBottom: 10 }}><label style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 12 }}>Opacidade<input aria-label="Opacidade do modelo" type="range" min="0.1" max="1" step="0.05" value={opacity} onChange={e => setOpacity(Number(e.target.value))} style={{ flex: 1, accentColor: "var(--orange)" }} /></label></div>
         <div style={{ display: 'flex', gap: 7, alignItems: 'stretch',
           background: 'rgba(11,18,28,.72)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
           border: '1px solid rgba(255,255,255,.12)', borderRadius: 22, padding: 8 }}>
+          <button className="tap" onClick={() => setVisible(v => !v)} aria-pressed={visible} style={{ flex: 1, border: 0, borderRadius: 15, color: "#fff", background: "rgba(255,255,255,.12)", fontSize: 13 }}>{visible ? "Ocultar modelo" : "Mostrar modelo"}</button>
           <button className="tap" onClick={onExit} style={{ flex: 1, border: 0, cursor: 'pointer',
             background: 'rgba(210,80,60,.18)', borderRadius: 15, padding: '10px 4px',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, color: '#ff9385' }}>

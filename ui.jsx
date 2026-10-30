@@ -1,17 +1,30 @@
 // ui.jsx - reusable building blocks for the Gimball AR prototype
 
 /* Gimball wordmark (mini) */
-function GMark({ size = 22, light = false }) {
+function GMark({ size = 22 }) {
   return (
-    <span style={{ fontFamily: 'var(--sans)', fontWeight: 800, fontSize: size,
-      letterSpacing: '-.03em', color: light ? '#fff' : 'var(--ink)', lineHeight: 1 }}>
-      <span style={{ color: 'var(--orange)' }}>g</span>imball
+    <span style={{ display: 'inline-flex' }}>
+      <img className="brand-image" src="assets/gimball-logo.png" alt="Gimball" style={{ width: size * 4.2, height: size * 1.11 }} />
     </span>
   );
 }
 
+function EmailNotice({ title, email, children }) {
+  return (
+    <div className="fadeup" style={{ padding: '24px 22px', textAlign: 'center' }}>
+      <div style={{ width: 72, height: 72, margin: '0 auto 22px', borderRadius: 22, display: 'grid', placeItems: 'center', background: 'var(--orange-100)', color: 'var(--orange-600)' }}>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>
+      </div>
+      <h1 style={{ fontSize: 24, letterSpacing: '-.025em', margin: '0 0 14px', color: 'var(--ink)' }}>{title}</h1>
+      <p style={{ fontSize: 14, color: 'var(--slate)', lineHeight: 1.6 }}>E-mail de destino<br/><strong style={{ color: 'var(--ink)', overflowWrap: 'anywhere' }}>{email}</strong></p>
+      <p className="demo-label" style={{ marginTop: 24, lineHeight: 1.6 }}>Demonstração: nenhum e-mail real foi enviado.</p>
+      {children}
+    </div>
+  );
+}
+
 /* Button - variants: primary | dark | ghost | soft | danger */
-function Btn({ children, variant = 'primary', block, disabled, onClick, icon, style = {}, size = 'md' }) {
+function Btn({ children, variant = 'primary', block, disabled, onClick, icon, style = {}, size = 'md', ...props }) {
   const pad = size === 'lg' ? '16px 22px' : size === 'sm' ? '9px 14px' : '13px 18px';
   const fs = size === 'lg' ? 16.5 : size === 'sm' ? 13.5 : 15.5;
   const base = {
@@ -30,7 +43,7 @@ function Btn({ children, variant = 'primary', block, disabled, onClick, icon, st
     danger:  { background: 'var(--red-100)', color: 'var(--red)' },
   };
   return (
-    <button className="tap" disabled={disabled} onClick={onClick}
+    <button type="button" {...props} className="tap" disabled={disabled} onClick={onClick}
       style={{ ...base, ...skins[variant], ...style }}>
       {icon}{children}
     </button>
@@ -48,7 +61,7 @@ function Badge({ children, color = 'var(--slate)', bg = '#F1F3F6', dot, style = 
     </span>
   );
 }
-function StatusBadge({ s }) { const m = window.PSTATUS[s] || window.STATUS[s]; return m ? <Badge color={m.color} bg={m.bg} dot>{m.label}</Badge> : null; }
+function StatusBadge({ s }) { const m = window.PSTATUS?.[s] || window.STATUS?.[s]; return m ? <Badge color={m.color} bg={m.bg} dot>{m.label}</Badge> : null; }
 function KindBadge({ kind }) {
   const k = window.KIND[kind];
   const asbuilt = kind === 'asbuilt';
@@ -87,7 +100,7 @@ function Skel({ w = '100%', h = 14, r = 8, style = {} }) {
 /* card shell */
 function Card({ children, onClick, style = {}, pad = 16, className = '' }) {
   return (
-    <div className={`tap ${className}`} onClick={onClick}
+    <div role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={e => { if (onClick && ["Enter", " "].includes(e.key)) { e.preventDefault(); onClick(); } }} className={`tap ${className}`} onClick={onClick}
       style={{ background: 'var(--card)', borderRadius: 'var(--r-md)', padding: pad,
         boxShadow: '0 1px 2px rgba(16,35,57,.05), 0 8px 22px -16px rgba(16,35,57,.18)',
         border: '1px solid #EEF0F3', cursor: onClick ? 'pointer' : 'default', ...style }}>
@@ -158,7 +171,7 @@ function Toast({ tone = 'ok', children }) {
     info: ['var(--navy-700)', <window.IcDownload s={18} />] };
   const [c, ic] = map[tone];
   return (
-    <div style={{ position: 'absolute', left: 16, right: 16, bottom: 30, zIndex: 80,
+    <div role="status" aria-live="polite" style={{ position: 'absolute', left: 16, right: 16, bottom: 92, zIndex: 80,
       display: 'flex', alignItems: 'center', gap: 11, padding: '13px 16px', borderRadius: 16,
       background: 'rgba(20,32,49,.96)', color: '#fff', fontSize: 14, fontWeight: 550,
       boxShadow: '0 18px 40px rgba(0,0,0,.4)', animation: 'toastIn .35s cubic-bezier(.22,1,.36,1) both' }}>
@@ -168,6 +181,6 @@ function Toast({ tone = 'ok', children }) {
 }
 
 Object.assign(window, {
-  GMark, Btn, Badge, StatusBadge, KindBadge, Avatar, Spinner, Skel, Card,
+  GMark, EmailNotice, Btn, Badge, StatusBadge, KindBadge, Avatar, Spinner, Skel, Card,
   EmptyState, TopBar, Screen, Toast,
 });

@@ -13,7 +13,7 @@ function ALayer({ depth0, role, instant, children }) {
   if (role === 'leaving') cls += ' lyr-out';
   else if (role === 'covered') style.transform = 'translateX(-22%)';
   else if (!instant && !settled) cls += depth0 ? ' lyr-fade' : ' lyr-in';
-  return <div className={cls} style={{ ...style, pointerEvents: role === 'top' ? 'auto' : 'none' }}>{children}
+  return <div className={cls} aria-hidden={role !== 'top'} inert={role !== 'top' ? "" : undefined} style={{ ...style, pointerEvents: role === 'top' ? 'auto' : 'none' }}>{children}
     {role === 'covered' && <div style={{ position: 'absolute', inset: 0, background: 'rgba(8,14,22,.22)' }} />}</div>;
 }
 
@@ -25,16 +25,20 @@ function AdminMobileApp() {
   const [toast, setToast] = aS(null);
   const [scale, setScale] = aS(1);
   const busy = aR(false);
+  const [, refresh] = React.useReducer(n => n + 1, 0);
+  React.useEffect(() => { window.addEventListener('demo-change', refresh); return () => window.removeEventListener('demo-change', refresh); }, []);
+  const toastTimer = React.useRef();
+  React.useEffect(() => () => clearTimeout(toastTimer.current), []);
 
   aE(() => { const f = () => setScale(Math.min(1, (window.innerHeight - 44) / ADEVICE_H, (window.innerWidth - 40) / 402)); f(); window.addEventListener('resize', f); return () => window.removeEventListener('resize', f); }, []);
   aE(() => { if (instant) { const id = requestAnimationFrame(() => setInstant(false)); return () => cancelAnimationFrame(id); } }, [instant, stack]);
 
-  const fireToast = (msg) => { setToast(msg); clearTimeout(fireToast._t); fireToast._t = setTimeout(() => setToast(null), 2000); };
+  const fireToast = (msg) => { setToast(msg); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(null), 2000); };
   const top = stack[stack.length - 1];
   const atRoot = stack.length === 1;
   const dark = ['camera', 'arview'].includes(top.key);
 
-  const push = (s) => { if (busy.current) return; setStack(st => [...st, s]); };
+  const push = (s) => { if (busy.current) return; setStack(st => st.at(-1).key === s.key ? st : [...st, s]); };
   const replace = (s) => { setStack(st => [...st.slice(0, -1), s]); };
   const pop = () => {
     if (busy.current || stack.length <= 1) return;
@@ -60,8 +64,8 @@ function AdminMobileApp() {
       case 'empForm': return <window.MEmpForm emp={s.emp} {...P} />;
       case 'construtoraList': return <window.MConstrutoraList {...P} />;
       case 'construtoraForm': return <window.MConstrutoraForm construtora={s.construtora} {...P} />;
-      case 'imovelDetail': return <window.MImovelDetail imovel={s.imovel} {...P} />;
-      case 'imovelForm': return <window.MImovelForm imovel={s.imovel} {...P} />;
+      case 'imovelDetail': return <window.MImovelDetail imovel={s.imovel && (window.ADM_IMOVEIS.find(i => i.id === s.imovel.id) || s.imovel)} {...P} />;
+      case 'imovelForm': return <window.MImovelForm imovel={s.imovel && (window.ADM_IMOVEIS.find(i => i.id === s.imovel.id) || s.imovel)} {...P} />;
       case 'plantaForm': return <window.MPlantaForm planta={s.planta} {...P} />;
       case 'permList': return <window.MPermList {...P} />;
       case 'permRole': return <window.MPermRole role={s.role} {...P} />;
@@ -76,7 +80,7 @@ function AdminMobileApp() {
     <div className="stage">
       <div className="phone-wrap" style={{ transform: `scale(${scale})`, transformOrigin: 'center' }}>
         <window.IOSDevice dark={dark}>
-          <div style={{ position: 'relative', height: ADEVICE_H, overflow: 'hidden', background: 'var(--bg)' }}>
+          <div className="app-surface">
             {stack.map((s, i) => (
               <ALayer key={s.key + '-' + i} depth0={i === 0} role={i === stack.length - 1 ? 'top' : 'covered'} instant={instant}>
                 {render(s)}
@@ -84,7 +88,7 @@ function AdminMobileApp() {
             ))}
             {leaving && <ALayer key={'lv-' + leaving.key} depth0={false} role="leaving" instant={false}>{render(leaving)}</ALayer>}
             {atRoot && !leaving && <window.TabBar active={tab} onTab={switchTab} />}
-            {toast && <window.Toast tone="ok">{toast}</window.Toast>}
+            {toast && <window.Toast tone={/Informe|Preencha|válid|cadastrad|antes|Selecione|restritos|gere um/i.test(toast) ? "err" : "ok"}>{toast}</window.Toast>}
           </div>
         </window.IOSDevice>
       </div>

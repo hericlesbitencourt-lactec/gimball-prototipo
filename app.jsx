@@ -19,7 +19,7 @@ function Layer({ screen, role, instant, children }) {
   else if (!instant && !settled) cls += screen.depth0 ? ' lyr-fade' : ' lyr-in';
 
   return (
-    <div className={cls} style={{ ...style, pointerEvents: role === 'top' ? 'auto' : 'none' }}>
+    <div className={cls} aria-hidden={role !== 'top'} inert={role !== 'top' ? "" : undefined} style={{ ...style, pointerEvents: role === 'top' ? 'auto' : 'none' }}>
       {children}
       {role === 'covered' && <div style={{ position: 'absolute', inset: 0, background: 'rgba(8,14,22,.28)' }} />}
     </div>
@@ -36,6 +36,10 @@ function App() {
   const [toast, setToast] = useState(null);
   const [route, setRoute] = useState('login'); // for rail highlight
   const busy = useRef(false);
+  const [, refresh] = React.useReducer(n => n + 1, 0);
+  React.useEffect(() => { window.addEventListener('demo-change', refresh); return () => window.removeEventListener('demo-change', refresh); }, []);
+  const toastTimer = React.useRef();
+  React.useEffect(() => () => clearTimeout(toastTimer.current), []);
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
@@ -54,9 +58,9 @@ function App() {
   const top = stack[stack.length - 1];
   const dark = authed && DARK_SCREENS.includes((leaving || top).key);
 
-  const fireToast = (tone, msg) => { setToast({ tone, msg }); clearTimeout(fireToast._t); fireToast._t = setTimeout(() => setToast(null), 2200); };
+  const fireToast = (tone, msg) => { setToast({ tone, msg }); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(null), 2200); };
 
-  const push = (screen) => { setStack(s => [...s, screen]); };
+  const push = (screen) => { if (busy.current) return; setStack(s => s.at(-1).key === screen.key ? s : [...s, screen]); };
   const pop = () => {
     if (busy.current || stack.length <= 1) { if (stack.length <= 1) setAuthed(false); return; }
     busy.current = true; setLeaving(top);
@@ -76,12 +80,12 @@ function App() {
   const openProperty = (propId) => { push({ key: 'property', propId }); setRoute('property'); };
   const openType = (propId, typeId) => { push({ key: 'plans', propId, typeId }); setRoute('plans'); };
   const viewPlant = (propId, typeId, plant) => { setCameraForce(null); push({ key: 'camera', propId, typeId, plant }); setRoute('camera'); };
-  const anchored = (s) => { setStack(st => [...st.slice(0, -1), { key: 'arview', ...s }]); setRoute('arview'); };
+  const anchored = (s) => { setStack(st => [...st.slice(0, -1), { ...s, key: 'arview' }]); setRoute('arview'); };
 
   /* ── render one screen by descriptor ── */
   const render = (s) => {
     switch (s.key) {
-      case 'dashboard': return <window.DashboardScreen user={window.USER} state={dashState} onOpen={openProperty} onLogout={logout} />;
+      case 'dashboard': return <window.DashboardScreen user={window.residentUser()} state={dashState} onOpen={openProperty} onLogout={logout} />;
       case 'property': return <window.PropertyScreen propId={s.propId} onBack={pop} onOpenType={(t) => openType(s.propId, t)} />;
       case 'plans': return <window.PlansScreen propId={s.propId} typeId={s.typeId} onBack={pop}
         onView={(pl) => viewPlant(s.propId, s.typeId, pl)} onToast={fireToast} />;
@@ -98,7 +102,7 @@ function App() {
       {/* phone */}
       <div className="phone-wrap" style={{ transform: `scale(${scale})`, transformOrigin: 'center' }}>
         <window.IOSDevice dark={dark}>
-          <div style={{ position: 'relative', height: DEVICE_H, overflow: 'hidden' }}>
+          <div className="app-surface">
             {authed ? (
               <>
                 {stack.map((s, i) => {

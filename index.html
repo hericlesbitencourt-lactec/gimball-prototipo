@@ -6,7 +6,7 @@
 <title>Gimball AR - Protótipo (Fluxo Morador)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     /* Brand - pulled from the Gimball wordmark */
@@ -150,9 +150,10 @@
   .lyr-out{animation:slideOutRight .42s cubic-bezier(.32,.72,0,1) both;z-index:3}
   .lyr-fade{animation:screenFade .4s ease}
 </style>
+<link rel="stylesheet" href="refinements.css">
+<link rel="icon" href="assets/gimball-logo.png">
 </head>
 <body>
-  <template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0B1A2E"/><text x="50" y="63" font-family="Arial, sans-serif" font-size="38" font-weight="800" text-anchor="middle"><tspan fill="#E8843A">g</tspan><tspan fill="#ffffff">b</tspan></text></svg></template>
   <div id="root"></div>
 
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
@@ -161,6 +162,8 @@
 
   <script type="text/babel" src="ios-frame.jsx"></script>
   <script type="text/babel" src="data.jsx"></script>
+  <script type="text/babel" src="admin-data.jsx"></script>
+  <script type="text/babel" src="demo-state.js"></script>
   <script type="text/babel" src="icons.jsx"></script>
   <script type="text/babel" src="ui.jsx"></script>
   <script type="text/babel" src="screens-flow.jsx"></script>

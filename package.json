@@ -1,0 +1,29 @@
+{
+  "name": "gimball-prototipo",
+  "version": "1.0.0",
+  "description": "Prot\u00f3tipo naveg\u00e1vel (mobile iOS) do app **Gimball** de visualiza\u00e7\u00e3o de plantas t\u00e9cnicas em AR via marcadores AprilTag.",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "start": "python3 -m http.server 4173",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hericlesbitencourt-lactec/gimball-prototipo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/hericlesbitencourt-lactec/gimball-prototipo/issues"
+  },
+  "homepage": "https://github.com/hericlesbitencourt-lactec/gimball-prototipo#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
+  },
+  "private": true
+}

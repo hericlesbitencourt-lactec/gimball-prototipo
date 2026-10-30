@@ -3,7 +3,7 @@
 /* ───────── MAIS (menu) ───────── */
 function MMais({ push, toast }) {
   return (
-    <window.Page title="Mais" sub="Construtora Teste">
+    <window.Page title="Mais" sub="Administração · demonstração">
       <window.Group header="Conta">
         <window.Row left={<window.MAvatar initials="CB" role="admin" size={42} />} title="Carla Bittencourt" sub="carla.admin@gimball.com.br · Administrador" chevron last onClick={() => toast('Perfil do administrador.')} />
       </window.Group>
@@ -19,11 +19,11 @@ function MMais({ push, toast }) {
       </window.Group>
 
       <window.Group>
-        <window.Row icon={<window.MIc.link s={18} />} title="Ver app do morador" trailing={<span style={{ fontSize: 13, color: 'var(--slate-300)' }}>index.html</span>} onClick={() => { window.location.href = 'index.html'; }} />
+        <window.Row icon={<window.MIc.link s={18} />} title="Ver app do morador" trailing={<span style={{ fontSize: 13, color: 'var(--slate-300)' }}>Morador</span>} onClick={() => { window.location.href = 'index.html'; }} />
         <window.Row icon={<window.MIc.logout s={18} />} iconBg="var(--red-100)" iconColor="var(--red)" title="Sair" danger last onClick={() => { window.location.href = 'index.html'; }} />
       </window.Group>
 
-      <div className="mono" style={{ textAlign: 'center', fontSize: 11, color: 'var(--slate-300)', padding: '4px 0 8px' }}>Gimball Admin · v1.0</div>
+      <div className="mono" style={{ textAlign: 'center', fontSize: 11, color: 'var(--slate-300)', padding: '4px 0 8px' }}>Demonstração · alterações nesta sessão</div>
     </window.Page>
   );
 }
@@ -39,7 +39,7 @@ function MPermList({ push, pop }) {
           return (
             <window.Row key={r.id} last={i === window.ADM_ROLES.length - 1} onClick={() => push({ key: 'permRole', role: r })}
               icon={<window.MIc.shield s={18} />} iconBg={m.bg} iconColor={m.color}
-              title={r.name} sub={`${r.users} usuários · ${count} permissões`} chevron />
+              title={r.name} sub={`${window.ADM_USERS.filter(u => u.role === r.slug).length} usuários · ${count} permissões`} chevron />
           );
         })}
       </window.Group>
@@ -63,11 +63,11 @@ function MPermRole({ role, pop, toast }) {
   const m = window.ROLE_BADGE[role.slug];
   const toggle = (code) => {
     if (isAdmin) return;
-    setMatrix(prev => {
-      const has = prev[code].includes(role.slug);
-      return { ...prev, [code]: has ? prev[code].filter(s => s !== role.slug) : [...prev[code], role.slug] };
-    });
-    toast('Permissão atualizada.');
+    const has = matrix[code].includes(role.slug);
+    const next = { ...matrix, [code]: has ? matrix[code].filter(s => s !== role.slug) : [...matrix[code], role.slug] };
+    Object.assign(window.PERM_MATRIX, next);
+    setMatrix(next);
+    window.Demo.notify(); toast('Permissão de demonstração atualizada.');
   };
   return (
     <window.Page large={false} title={role.name} onBack={{ label: 'Permissões', fn: pop }}>

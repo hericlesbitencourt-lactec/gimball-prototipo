@@ -53,12 +53,12 @@ function NavBar({ title, sub, onBack, right, scrolled, large = true }) {
         {onBack && (
           <button className="tap" onClick={onBack.fn} aria-label="Voltar" style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'none', border: 0,
             color: 'var(--orange-600)', cursor: 'pointer', fontWeight: 600, fontSize: 16, padding: '4px 6px 4px 0', marginLeft: -2 }}>
-            <window.IcChevL s={24} /> {onBack.label || 'Voltar'}
+            <window.IcChevL s={24} /> <span className="nav-back-label">{onBack.label || 'Voltar'}</span>
           </button>
         )}
         {scrolled && !large && <div style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>{title}</div>}
         {scrolled && large && <div style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 700, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 8px' }}>{title}</div>}
-        {!scrolled && <div style={{ flex: 1 }} />}
+        {!scrolled && <div style={{ flex: 1, minWidth: 0, textAlign: "center", fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{!large && title}</div>}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>{right}</div>
       </div>
       {large && (
@@ -88,9 +88,18 @@ function Group({ header, footer, children, style = {} }) {
     </div>
   );
 }
-function Row({ left, icon, iconBg, iconColor, title, sub, value, valueColor, chevron, onClick, danger, trailing, last }) {
+function Row({ left, icon, iconBg, iconColor, title, sub, value, valueColor, chevron, onClick, danger, trailing, last, confirmation }) {
+  const [confirming, setConfirming] = React.useState(false);
+  const prompt = confirmation || (danger && title.startsWith('Remover') ? {
+    title: title + '?', body: 'Este cadastro será removido da demonstração. Esta ação não pode ser desfeita.', action: 'Remover',
+  } : null);
+  const activate = () => {
+    if (prompt) setConfirming(true);
+    else onClick?.();
+  };
   return (
-    <div className={onClick ? 'tap' : ''} onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+    <>
+    <div role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={e => { if (onClick && e.target === e.currentTarget && ["Enter", " "].includes(e.key)) { e.preventDefault(); activate(); } }} className={onClick ? 'tap' : ''} onClick={onClick ? activate : undefined} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
       borderBottom: last ? 'none' : '1px solid #F1F3F6', cursor: onClick ? 'pointer' : 'default' }}>
       {icon && <div style={{ width: 32, height: 32, borderRadius: 9, flex: '0 0 auto', display: 'grid', placeItems: 'center', background: iconBg || '#F2F5F8', color: iconColor || 'var(--navy-700)' }}>{icon}</div>}
       {left}
@@ -102,6 +111,11 @@ function Row({ left, icon, iconBg, iconColor, title, sub, value, valueColor, che
       {value != null && <div style={{ fontSize: 14.5, color: valueColor || 'var(--slate)', fontWeight: 500, flex: '0 0 auto', maxWidth: 150, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right' }}>{value}</div>}
       {chevron && <span style={{ color: 'var(--slate-300)', flex: '0 0 auto', marginLeft: -2 }}><window.IcChevR s={19} /></span>}
     </div>
+    {prompt && <Sheet open={confirming} onClose={() => setConfirming(false)} title={prompt.title}
+      footer={<><Action variant="ghost" onClick={() => setConfirming(false)}>Cancelar</Action><Action variant={danger ? 'danger' : 'primary'} onClick={() => { setConfirming(false); onClick?.(); }}>{prompt.action}</Action></>}>
+      <p style={{ margin: '4px 20px 22px', color: 'var(--slate)', fontSize: 14, lineHeight: 1.6 }}>{prompt.body}</p>
+    </Sheet>}
+    </>
   );
 }
 
@@ -110,9 +124,9 @@ function Search({ value, onChange, placeholder }) {
   return (
     <div style={{ margin: '0 16px 16px', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(118,118,128,.1)', borderRadius: 11, padding: '0 11px' }}>
       <span style={{ color: 'var(--slate-300)', display: 'flex' }}><MIc.search s={18} /></span>
-      <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || 'Buscar'} spellCheck={false}
+      <input aria-label={placeholder || "Buscar"} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || 'Buscar'} spellCheck={false}
         style={{ flex: 1, border: 0, outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15.5, fontFamily: 'var(--sans)', color: 'var(--ink)' }} />
-      {value && <button onClick={() => onChange('')} style={{ border: 0, background: 'none', color: 'var(--slate-300)', cursor: 'pointer', display: 'flex', padding: 2 }}><window.IcClose s={16} /></button>}
+      {value && <button aria-label="Limpar busca" onClick={() => onChange('')} style={{ border: 0, background: 'none', color: 'var(--slate-300)', cursor: 'pointer', display: 'flex', padding: 2 }}><window.IcClose s={16} /></button>}
     </div>
   );
 }
@@ -134,22 +148,42 @@ function Segment({ value, set, opts }) {
    sem animação de entrada: overlays animados por keyframes permanentes podem
    congelar no 1º frame (iframe oculto / reduced-motion) e ficar fora da tela. */
 function Sheet({ open, onClose, title, children, footer, height }) {
+  const dialog = React.useRef(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const previous = document.activeElement;
+    const node = dialog.current;
+    node?.focus();
+    const handle = e => {
+      const dialogs = [...document.querySelectorAll('[role="dialog"]')];
+      if (dialogs.at(-1) !== node) return;
+      if (e.key === 'Escape') { e.preventDefault(); onClose(); }
+      if (e.key === 'Tab') {
+        const controls = [...node.querySelectorAll('button:not(:disabled), input, [tabindex="0"]')];
+        const first = controls[0], last = controls.at(-1);
+        if (e.shiftKey && (document.activeElement === first || document.activeElement === node)) { e.preventDefault(); last?.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+      }
+    };
+    document.addEventListener('keydown', handle);
+    return () => { document.removeEventListener('keydown', handle); if (previous?.isConnected) previous.focus(); };
+  }, [open]);
   if (!open) return null;
-  return (
+  return ReactDOM.createPortal(
     <div onClick={onClose} style={{ position: 'absolute', inset: 0, zIndex: 80, background: 'rgba(8,14,22,.4)', display: 'flex', alignItems: 'flex-end' }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxHeight: height || '88%', background: '#F3F4F6', borderRadius: '22px 22px 0 0',
+      <div ref={dialog} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()} style={{ width: '100%', maxHeight: height || '88%', background: '#F3F4F6', borderRadius: '22px 22px 0 0',
         display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ flex: '0 0 auto', paddingTop: 10 }}>
           <div style={{ width: 38, height: 5, borderRadius: 99, background: 'var(--line)', margin: '0 auto 6px' }} />
           {title && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 16px 12px' }}>
             <div style={{ fontSize: 19, fontWeight: 800, letterSpacing: '-.02em', color: 'var(--ink)' }}>{title}</div>
-            <button className="tap" onClick={onClose} style={{ width: 30, height: 30, borderRadius: 99, border: 0, background: 'rgba(118,118,128,.12)', color: 'var(--slate)', display: 'grid', placeItems: 'center', cursor: 'pointer' }}><window.IcClose s={18} /></button>
+            <button aria-label="Fechar" className="tap" onClick={onClose} style={{ width: 30, height: 30, borderRadius: 99, border: 0, background: 'rgba(118,118,128,.12)', color: 'var(--slate)', display: 'grid', placeItems: 'center', cursor: 'pointer' }}><window.IcClose s={18} /></button>
           </div>}
         </div>
         <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 8 }}>{children}</div>
         {footer && <div style={{ flex: '0 0 auto', padding: '12px 16px', paddingBottom: 26, borderTop: '1px solid var(--line)', background: '#fff', display: 'flex', gap: 10 }}>{footer}</div>}
       </div>
-    </div>
+    </div>, document.querySelector('.app-surface')
   );
 }
 
@@ -158,14 +192,14 @@ function FInput({ label, value, onChange, placeholder, type = 'text', last }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderBottom: last ? 'none' : '1px solid #F1F3F6' }}>
       <div style={{ fontSize: 15, color: 'var(--ink)', fontWeight: 550, flex: '0 0 38%' }}>{label}</div>
-      <input type={type} value={value} onChange={e => onChange && onChange(e.target.value)} placeholder={placeholder} spellCheck={false}
+      <input aria-label={label} type={type} value={value} onChange={e => onChange && onChange(e.target.value)} placeholder={placeholder} spellCheck={false}
         style={{ flex: 1, border: 0, outline: 'none', background: 'transparent', fontFamily: 'var(--sans)', fontSize: 15, color: 'var(--ink)', textAlign: 'right', minWidth: 0 }} />
     </div>
   );
 }
 function FSelect({ label, value, display, onClick, last }) {
   return (
-    <div className="tap" onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: last ? 'none' : '1px solid #F1F3F6', cursor: 'pointer' }}>
+    <div role="button" tabIndex={0} aria-label={label} onKeyDown={e => { if (["Enter", " "].includes(e.key)) { e.preventDefault(); onClick?.(); } }} className="tap" onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: last ? 'none' : '1px solid #F1F3F6', cursor: 'pointer' }}>
       <div style={{ fontSize: 15, color: 'var(--ink)', fontWeight: 550, flex: '0 0 auto' }}>{label}</div>
       <div style={{ flex: 1, textAlign: 'right', fontSize: 15, color: 'var(--slate)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{display}</div>
       <span style={{ color: 'var(--slate-300)', flex: '0 0 auto', marginLeft: -4 }}><window.IcChevR s={18} /></span>
@@ -176,7 +210,7 @@ function FToggle({ label, on, onToggle, last, disabled }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderBottom: last ? 'none' : '1px solid #F1F3F6' }}>
       <div style={{ flex: 1, fontSize: 15, color: 'var(--ink)', fontWeight: 550 }}>{label}</div>
-      <button onClick={() => !disabled && onToggle()} disabled={disabled} style={{ width: 50, height: 30, borderRadius: 99, border: 0, cursor: disabled ? 'default' : 'pointer',
+      <button role="switch" aria-label={label} aria-checked={on} onClick={() => !disabled && onToggle()} disabled={disabled} style={{ width: 50, height: 30, borderRadius: 99, border: 0, cursor: disabled ? 'default' : 'pointer',
         background: on ? 'var(--green)' : 'rgba(118,118,128,.22)', position: 'relative', transition: 'background .2s', opacity: disabled ? .55 : 1 }}>
         <span style={{ position: 'absolute', top: 2, left: on ? 22 : 2, width: 26, height: 26, borderRadius: 99, background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.3)', transition: 'left .2s' }} />
       </button>
@@ -230,7 +264,7 @@ function TabBar({ active, onTab }) {
       {tabs.map(([id, label, Ic]) => {
         const on = active === id;
         return (
-          <button key={id} className="tap" onClick={() => onTab(id)} style={{ flex: 1, border: 0, background: 'none', cursor: 'pointer',
+          <button aria-current={on ? "page" : undefined} key={id} className="tap" onClick={() => onTab(id)} style={{ flex: 1, border: 0, background: 'none', cursor: 'pointer',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: on ? 'var(--orange)' : 'var(--slate)', padding: '2px 0' }}>
             <Ic s={24} w={on ? 2.1 : 1.8} />
             <span style={{ fontSize: 10.5, fontWeight: on ? 650 : 500, letterSpacing: '-.01em' }}>{label}</span>
