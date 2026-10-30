@@ -16,6 +16,8 @@ A tela **Meus dados** é acessível pelo avatar do Morador e em **Mais → Meus 
 
 O Administrador analisa pedidos em **Solicitações cadastrais**, acessível em Início ou Mais. A tela compara dados atuais e solicitados e permite aprovar ou recusar, com motivo obrigatório na recusa. Mudanças de e-mail aguardam uma confirmação adicional em Meus dados antes da aplicação. A confirmação é uma etapa local de apresentação do fluxo; nenhum e-mail real é enviado. Solicitações persistem na sessão e alterações concorrentes no cadastro bloqueiam a aprovação para evitar sobrescritas.
 
+A página inicial destaca pedidos pendentes para o Administrador e mostra ao solicitante o andamento, a aprovação ou o motivo da recusa. Confirmações usam modais centrais dentro do aparelho. Seleções com busca permanecem em painéis inferiores. Antes de abrir a prévia AR, a tela informa localização, ID e tamanho do marcador vinculado à planta.
+
 React, ReactDOM, Babel e fontes usam CDN: é necessário acesso à internet. Sirva via HTTP; `file://` não é suportado pelo carregamento de JSX.
 
 `npm start` e `npm test` versionam automaticamente os scripts e estilos locais para evitar mistura de arquivos antigos em cache. Ao usar outro servidor estático, execute `npm run assets:version` depois de alterar o código e antes de publicar.
@@ -28,11 +30,12 @@ npx playwright install chromium
 npm test
 ```
 
-A suíte abre um servidor estático, testa os dois perfis, validações, persistência, exclusões, permissões e AR simulado. Verifica erros de JavaScript, console e requisições em cinco resoluções (320×568 a 1440×1000, incluindo paisagem). Capturas ficam em `test-results/`.
+A suíte abre um servidor estático, testa os três perfis, validações, persistência, exclusões, permissões e AR simulado. Verifica erros de JavaScript, console e requisições em cinco resoluções (320×568 a 1440×1000, incluindo paisagem). Capturas ficam em `test-results/`.
 
 ## Identidade e recursos
 
 - Logo original, sem redesenho: [PNG local](assets/gimball-logo.png), obtido do [arquivo publicado pela Gimball](https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=768,fit=crop/A1aPXGKMozfEzDyx/marca-semtag-AoPWK3DpbwuaRlE1.png).
+- Favicon e ícone de atalho: cópias locais dos arquivos publicados no [site institucional](https://gimball.com.br/), usando o símbolo oficial em vez da logo horizontal.
 - [Site oficial](https://gimball.com.br/): Montserrat, superfícies claras, grafite, laranja da marca e azul de apoio `#457B9D`. Cores de status e disciplinas são convenções do protótipo, sem representar um manual oficial.
 - Foto ilustrativa local: [Unsplash](https://images.unsplash.com/photo-1497366811353-6870744d04b2), sem representar um imóvel cadastrado.
 

@@ -30,13 +30,13 @@ function Btn({ children, variant = 'primary', block, disabled, onClick, icon, st
   const base = {
     display: block ? 'flex' : 'inline-flex', width: block ? '100%' : 'auto',
     alignItems: 'center', justifyContent: 'center', gap: 9,
-    padding: pad, fontSize: fs, fontWeight: 650, borderRadius: 14,
+    padding: pad, minHeight: 44, fontSize: fs, fontWeight: 650, borderRadius: 14,
     border: '1px solid transparent', cursor: disabled ? 'default' : 'pointer',
     fontFamily: 'var(--sans)', letterSpacing: '-.01em', lineHeight: 1.1,
     opacity: disabled ? 0.5 : 1, transition: 'transform .12s, filter .15s, background .15s',
   };
   const skins = {
-    primary: { background: 'var(--orange)', color: '#fff', boxShadow: '0 6px 16px rgba(232,132,58,.32)' },
+    primary: { background: 'var(--orange)', color: 'var(--ink)', boxShadow: '0 6px 16px rgba(253,120,48,.18)' },
     dark:    { background: 'var(--navy-800)', color: '#fff' },
     ghost:   { background: 'transparent', color: 'var(--slate)', border: '1px solid var(--line)' },
     soft:    { background: '#F1F3F6', color: 'var(--ink)' },
@@ -135,7 +135,7 @@ function TopBar({ title, sub, onBack, right, scrolled }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 16px 12px' }}>
         {onBack && (
           <button className="tap" onClick={onBack} aria-label="Voltar" style={{
-            width: 40, height: 40, flex: '0 0 auto', borderRadius: 13, border: '1px solid var(--line)',
+            width: 44, height: 44, flex: '0 0 auto', borderRadius: 13, border: '1px solid var(--line)',
             background: '#fff', color: 'var(--ink)', display: 'grid', placeItems: 'center', cursor: 'pointer',
             boxShadow: '0 1px 2px rgba(16,35,57,.05)' }}>
             <window.IcChevL s={22} />
@@ -164,7 +164,7 @@ function Screen({ children, onScroll, dark, bg, pad = true }) {
   );
 }
 
-function LogoutModal({ open, onCancel, onConfirm }) {
+function ConfirmModal({ open, title, description, confirmLabel = 'Confirmar', danger = false, onCancel, onConfirm }) {
   const overlay = React.useRef(null);
   const panel = React.useRef(null);
   const titleId = React.useId();
@@ -194,29 +194,56 @@ function LogoutModal({ open, onCancel, onConfirm }) {
     };
   }, [open]);
   if (!open) return null;
-  const buttonStyle = { flex: 1, minHeight: 52, border: 0, background: 'transparent', padding: '14px 10px', fontSize: 16, fontWeight: 650, cursor: 'pointer' };
+  const buttonStyle = { flex: 1, minWidth: 0, minHeight: 52, border: 0, background: 'transparent', padding: '14px 10px', fontSize: 15, fontWeight: 650, cursor: 'pointer' };
   return ReactDOM.createPortal(
     <div ref={overlay} onClick={onCancel} style={{ position: 'absolute', inset: 0, zIndex: 100, display: 'grid', placeItems: 'center', padding: 24, background: 'rgba(8,14,22,.48)' }}>
       <div ref={panel} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} onClick={e => e.stopPropagation()}
         style={{ width: '100%', maxWidth: 320, maxHeight: '100%', overflowY: 'auto', borderRadius: 24, background: '#fff', boxShadow: '0 18px 60px rgba(0,0,0,.25)' }}>
         <div style={{ padding: '25px 22px 23px', textAlign: 'center' }}>
-          <h2 id={titleId} style={{ margin: '0 0 10px', fontSize: 20, fontWeight: 750, letterSpacing: '-.02em', color: 'var(--ink)' }}>Sair do aplicativo?</h2>
-          <p id={descriptionId} style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: 'var(--slate)' }}>Você voltará para a tela de acesso. Deseja realmente sair?</p>
+          <h2 id={titleId} style={{ margin: '0 0 10px', fontSize: 20, fontWeight: 750, letterSpacing: '-.02em', color: 'var(--ink)' }}>{title}</h2>
+          <p id={descriptionId} style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: 'var(--slate)', overflowWrap: 'anywhere' }}>{description}</p>
         </div>
         <div style={{ display: 'flex', borderTop: '1px solid var(--line)' }}>
           <button type="button" onClick={onCancel} style={{ ...buttonStyle, color: 'var(--ink)', borderRight: '1px solid var(--line)' }}>Cancelar</button>
-          <button type="button" onClick={onConfirm} style={{ ...buttonStyle, color: 'var(--red)' }}>Sair</button>
+          <button type="button" onClick={onConfirm} style={{ ...buttonStyle, color: danger ? 'var(--red)' : 'var(--orange-600)' }}>{confirmLabel}</button>
         </div>
       </div>
     </div>, document.querySelector('.app-surface')
   );
 }
 
+function LogoutModal(props) {
+  return <ConfirmModal {...props} title="Sair do aplicativo?" description="Você voltará para a tela de acesso. Deseja realmente sair?" confirmLabel="Sair" danger />;
+}
+
+// Shared by the small forms: errors stay beside their fields and focus follows validation.
+function useFieldErrors() {
+  const [errors, setErrors] = React.useState({});
+  const validate = next => {
+    const invalid = Object.fromEntries(Object.entries(next).filter(([, message]) => message));
+    setErrors(invalid);
+    if (Object.keys(invalid).length) {
+      requestAnimationFrame(() => {
+        const input = [...document.querySelectorAll('[aria-invalid="true"]')].find(el => !el.closest('[inert]'));
+        input?.focus();
+        input?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      });
+      return false;
+    }
+    return true;
+  };
+  const field = (label, set) => ({ error: errors[label], onChange: value => {
+    set(value);
+    setErrors(previous => ({ ...previous, [label]: undefined }));
+  } });
+  return { field, validate, clear: () => setErrors({}) };
+}
+
 /* toast */
 function Toast({ tone = 'ok', children }) {
-  const map = { ok: ['var(--green)', <window.IcCheck s={18} w={2.4} />],
-    err: ['var(--red)', <window.IcAlert s={18} />],
-    info: ['var(--navy-700)', <window.IcDownload s={18} />] };
+  const map = { ok: ['#72dca4', <window.IcCheck s={18} w={2.4} />],
+    err: ['#ffad9f', <window.IcAlert s={18} />],
+    info: ['#a6d9ff', <window.IcDownload s={18} />] };
   const [c, ic] = map[tone];
   return (
     <div role="status" aria-live="polite" style={{ position: 'absolute', left: 16, right: 16, bottom: 92, zIndex: 80,
@@ -230,5 +257,5 @@ function Toast({ tone = 'ok', children }) {
 
 Object.assign(window, {
   GMark, EmailNotice, Btn, Badge, StatusBadge, KindBadge, Avatar, Spinner, Skel, Card,
-  EmptyState, TopBar, Screen, Toast, LogoutModal,
+  EmptyState, TopBar, Screen, Toast, ConfirmModal, LogoutModal, useFieldErrors,
 });

@@ -81,7 +81,7 @@ function GlassTop({ children, dark = true }) {
 }
 function RoundBtn({ icon, onClick, label, tone }) {
   return (
-    <button className="tap" aria-label={label} onClick={onClick} style={{ width: 42, height: 42, borderRadius: 14,
+    <button className="tap" aria-label={label} onClick={onClick} style={{ width: 44, height: 44, borderRadius: 14,
       flex: '0 0 auto', border: '1px solid rgba(255,255,255,.16)', background: tone || 'rgba(18,28,42,.5)',
       backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', color: '#fff', display: 'grid',
       placeItems: 'center', cursor: 'pointer' }}>{icon}</button>
@@ -114,8 +114,8 @@ function CameraScreen({ plant, propId, typeId, onBack, onAnchored, forceState })
   const locked = phase === 'detected' || phase === 'loading';
 
   const caption = {
-    searching: ['Enquadre o marcador', 'Mantenha o marcador inteiro no enquadramento. Abra a prévia para explorar o modelo.'],
-    detected: ['Referência selecionada', `AprilTag identificado · ${plant ? plant.tag : 'tag36h11'}`],
+    searching: ['Enquadre o marcador', 'Mantenha o marcador inteiro no quadro e o aparelho estável.'],
+    detected: ['Referência selecionada', `AprilTag de referência · ${plant ? plant.tag : 'tag36h11'}`],
     loading: ['Carregando prévia…', plant ? plant.file : 'modelo.usdz'],
     error: ['Não encontramos o marcador', 'Verifique a iluminação e mantenha o AprilTag inteiro no enquadramento.'],
   }[phase];
@@ -138,10 +138,11 @@ function CameraScreen({ plant, propId, typeId, onBack, onAnchored, forceState })
         <RoundBtn label="Ajuda" icon={<window.IcHelp s={22} />} onClick={() => setHelp(true)} />
       </GlassTop>
 
-      <div style={{ position: "absolute", top: 124, left: 0, right: 0, textAlign: "center", color: "#fff", fontSize: 11, fontWeight: 700, letterSpacing: ".08em" }}>PRÉVIA AR</div>
+      <div className="camera-content" style={{ position: 'relative', height: '100%', padding: '120px 18px 36px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ textAlign: 'center', color: '#fff', fontSize: 12, fontWeight: 700, letterSpacing: '.08em' }}>PRÉVIA AR</div>
       {/* center reticle + marker */}
-      <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
-        <div style={{ position: 'relative', display: 'grid', placeItems: 'center' }}>
+      <div className="camera-aim" style={{ position: 'relative', flex: '1 0 210px' }}>
+        <div className="camera-target" style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
           {phase !== 'error' && <Reticle locked={locked} />}
           {/* the physical marker sitting in the scene */}
           {phase !== 'error' && (
@@ -171,7 +172,7 @@ function CameraScreen({ plant, propId, typeId, onBack, onAnchored, forceState })
       </div>
 
       {/* bottom status panel */}
-      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 40, padding: '0 18px 40px' }}>
+      <div style={{ position: 'relative', flexShrink: 0 }}>
         <div style={{ background: 'rgba(11,18,28,.72)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
           border: '1px solid rgba(255,255,255,.12)', borderRadius: 22, padding: '18px 18px 16px', color: '#fff', textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, marginBottom: 6 }}>
@@ -181,7 +182,13 @@ function CameraScreen({ plant, propId, typeId, onBack, onAnchored, forceState })
             {phase === 'error' && <span style={{ color: '#ff9f8f', display: 'flex' }}><window.IcAlert s={18} /></span>}
             <span style={{ fontSize: 16, fontWeight: 750, letterSpacing: '-.01em' }}>{caption[0]}</span>
           </div>
-          <div className={phase === 'loading' ? 'mono' : ''} style={{ fontSize: 12.5, color: 'rgba(255,255,255,.66)', lineHeight: 1.45, padding: '0 6px' }}>{caption[1]}</div>
+          <div className={phase === 'loading' ? 'mono' : ''} style={{ fontSize: 13, color: 'rgba(255,255,255,.86)', overflowWrap: 'anywhere', lineHeight: 1.5, padding: '0 6px' }}>{caption[1]}</div>
+
+          {(phase === 'searching' || phase === 'error') && <div style={{ marginTop: 14, padding: '12px 0', borderTop: '1px solid rgba(255,255,255,.2)', borderBottom: '1px solid rgba(255,255,255,.2)', textAlign: 'left' }}>
+            <div style={{ fontSize: 12, color: '#d5dce3', marginBottom: 5 }}>Onde encontrar o marcador</div>
+            <div style={{ fontSize: 14, fontWeight: 650, lineHeight: 1.5, overflowWrap: 'anywhere' }}>{plant?.marker?.location || 'Localização não informada. Consulte a administração.'}</div>
+            <div className="mono" style={{ fontSize: 12, color: '#d5dce3', marginTop: 6, lineHeight: 1.5 }}>{plant?.tag || 'Marcador não informado'}{plant?.marker?.size ? ` · ${plant.marker.size} cm` : ''}</div>
+          </div>}
 
           {phase === 'searching' && <div style={{ marginTop: 14, display: 'grid', gap: 8 }}>
             <window.Btn block onClick={() => setPhase('detected')}>Abrir prévia</window.Btn>
@@ -196,6 +203,7 @@ function CameraScreen({ plant, propId, typeId, onBack, onAnchored, forceState })
             <window.Btn block onClick={() => setPhase('searching')} style={{ marginTop: 14 }} icon={<window.IcReset s={18} />}>Tentar novamente</window.Btn>
           )}
         </div>
+      </div>
       </div>
 
       {help && <HelpSheet onClose={() => setHelp(false)} />}

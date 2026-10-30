@@ -36,6 +36,8 @@ test('morador: login validado, falha de leitura, ajuda, AR e retorno', async ({ 
   await page.getByRole('button').filter({ hasText: 'Residencial Aurora' }).click();
   await top(page).getByRole('button').filter({ hasText: 'Hidrossanitário' }).click();
   await top(page).getByRole('button', { name: 'Visualizar planta', exact: true }).click();
+  await expect(top(page).getByText('Hall hidráulico, parede norte', { exact: true })).toBeVisible();
+  await expect(top(page).getByText('tag36h11 · id 21 · 16,0 cm', { exact: true })).toBeVisible();
   await top(page).getByRole('button', { name: 'Não consigo ler o marcador' }).click();
   await expect(top(page).getByText('Não encontramos o marcador')).toBeVisible();
   await top(page).getByRole('button', { name: 'Tentar novamente' }).click();
@@ -57,7 +59,9 @@ test('usuários: validação, criar, editar, recarregar e remover com confirmaç
   await top(page).getByRole('button').filter({ hasText: 'Usuários' }).click();
   await top(page).getByRole('button', { name: 'Novo', exact: true }).click();
   await top(page).getByRole('button', { name: 'Criar', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Informe nome');
+  await expect(top(page).getByRole('alert')).toHaveText(['Informe o nome completo.', 'Informe um e-mail válido.']);
+  await expect(top(page).getByLabel('Nome', { exact: true })).toBeFocused();
+  await expect(top(page).getByLabel('Nome', { exact: true })).toHaveAttribute('aria-invalid', 'true');
   await top(page).getByLabel('Nome', { exact: true }).fill('Ana Teste');
   await top(page).getByLabel('E-mail', { exact: true }).fill('ana@example.com');
   await top(page).getByRole('button', { name: 'Criar', exact: true }).click();
@@ -277,6 +281,8 @@ test('confirmação de exclusão fica dentro da moldura do iPhone', async ({ pag
   await expect(modal).toBeVisible();
   const phone = await page.locator('.ios-device').boundingBox();
   const box = await modal.boundingBox();
+  expect(Math.abs(box.y + box.height / 2 - phone.y - phone.height / 2)).toBeLessThan(2);
+  await expect(modal.getByRole('button', { name: 'Cancelar', exact: true })).toBeFocused();
   expect(box.x).toBeGreaterThanOrEqual(phone.x);
   expect(box.x + box.width).toBeLessThanOrEqual(phone.x + phone.width + 1);
   expect(box.y + box.height).toBeLessThanOrEqual(phone.y + phone.height + 1);
@@ -409,7 +415,13 @@ test('meus dados: consulta, solicitação, aprovação e cancelamento da ediçã
   await top(page).getByRole('button', { name: 'Solicitar alteração', exact: true }).click();
   await top(page).getByLabel('Nome', { exact: true }).fill('');
   await top(page).getByRole('button', { name: 'Enviar solicitação', exact: true }).click();
-  await expect(top(page).getByRole('alert')).toHaveText('Informe seu nome.');
+  await expect(top(page).getByRole('alert')).toHaveText('Informe o nome completo.');
+  await expect(top(page).getByLabel('Nome', { exact: true })).toBeFocused();
+  await back(page);
+  await top(page).getByRole('button', { name: 'Solicitar alteração', exact: true }).click();
+  await expect(top(page).getByLabel('Nome', { exact: true })).toHaveValue('Carla Bittencourt');
+  await expect(top(page).locator('[aria-invalid="true"]')).toHaveCount(0);
+  await expect(top(page).getByRole('alert')).toHaveCount(0);
   await top(page).getByLabel('Nome', { exact: true }).fill('Carla Revisada');
   await top(page).getByLabel('E-mail', { exact: true }).fill('marina.alves@email.com');
   await top(page).getByRole('button', { name: 'Enviar solicitação', exact: true }).click();
@@ -453,7 +465,10 @@ test('solicitação do morador exige aprovação e confirmação do novo e-mail'
   await expect(top(page).getByText('Pendente de análise', { exact: true })).toBeVisible();
   await page.screenshot({ path: 'test-results/meus-dados-pendente-320.png' });
   expect(await page.evaluate(() => window.ADM_USERS.find(u => u.id === 'u1').email)).toBe('marina.alves@email.com');
+  await back(page);
+  await expect(top(page).getByRole('button', { name: /Alteração em análise/ })).toBeVisible();
   await admin(page);
+  await expect(top(page).getByText('Aguardando sua análise', { exact: true })).toBeVisible();
   await top(page).getByRole('button', { name: /^Solicitações cadastrais/ }).click();
   await top(page).getByText('Marina Alves', { exact: true }).click();
   await expect(top(page).getByText('ana.residente@example.com', { exact: true })).toBeVisible();
@@ -462,11 +477,13 @@ test('solicitação do morador exige aprovação e confirmação do novo e-mail'
   await page.getByRole('dialog').getByRole('button', { name: 'Aprovar', exact: true }).click();
   expect(await page.evaluate(() => window.ADM_USERS.find(u => u.id === 'u1').email)).toBe('marina.alves@email.com');
   await login(page);
+  await expect(top(page).getByRole('button', { name: /Confirme seu novo e-mail/ })).toBeVisible();
   await top(page).getByRole('button', { name: 'Meus dados', exact: true }).click();
   await top(page).getByRole('button', { name: 'Confirmar novo e-mail', exact: true }).click();
   await expect(top(page).getByText('ana.residente@example.com', { exact: true })).toBeVisible();
   await top(page).getByRole('button', { name: 'Confirmar e-mail', exact: true }).click();
   await expect(top(page).getByText('Olá, Ana', { exact: true })).toBeVisible();
+  await expect(top(page).getByRole('button', { name: /Alteração cadastral aprovada/ })).toBeVisible();
   expect(await page.evaluate(() => {
     const u = window.ADM_USERS.find(u => u.id === 'u1');
     return { role: u.role, status: u.status, linked: u.linked };
@@ -496,6 +513,7 @@ test('engenheiro: projetos, marcadores, AR e meus dados sem gestão administrati
   await page.getByRole('button', { name: 'Engenheiro', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'E-mail', exact: true })).toHaveValue('rafael.eng@gimball.com.br');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await page.waitForURL('**/admin.html?perfil=engenheiro', { waitUntil: 'domcontentloaded' });
   await expect(top(page).getByText('Área técnica', { exact: true })).toBeVisible();
   await expect(top(page).getByRole('button', { name: /^Usuários/ })).toHaveCount(0);
   await page.getByRole('button', { name: 'Mais', exact: true }).click();
@@ -580,11 +598,13 @@ test('recusa exige motivo e preserva o cadastro do engenheiro', async ({ page })
   await top(page).getByText('Rafael Nogueira', { exact: true }).click();
   await top(page).getByRole('button', { name: 'Recusar', exact: true }).click();
   await expect(top(page).getByRole('alert')).toHaveText('Informe o motivo da recusa.');
+  await expect(top(page).getByLabel('Motivo da recusa', { exact: true })).toBeFocused();
   await top(page).getByLabel('Motivo da recusa', { exact: true }).fill('Confirme o DDD do telefone.');
   await top(page).getByRole('button', { name: 'Recusar', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Recusar', exact: true }).click();
   await expect(top(page).getByText('Nenhuma solicitação pendente')).toBeVisible();
   await page.goto('/admin.html?perfil=engenheiro');
+  await expect(top(page).getByRole('button', { name: /Alteração cadastral recusada/ })).toContainText('Confirme o DDD do telefone.');
   await page.getByRole('button', { name: 'Mais', exact: true }).click();
   await top(page).getByRole('button', { name: /Meus dados/ }).click();
   await expect(top(page).getByText('(41) 99654-1180', { exact: true })).toBeVisible();

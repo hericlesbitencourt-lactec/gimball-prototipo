@@ -17,6 +17,7 @@ function MProfileRequestReview({ requestId, reviewerId, pop, toast }) {
   const [reason, setReason] = React.useState('');
   const [error, setError] = React.useState('');
   const [decision, setDecision] = React.useState(null);
+  const reasonInput = React.useRef(null);
   const request = window.ADM_PROFILE_REQUESTS.find(r => r.id === requestId);
   if (!request) return <window.Page title="Solicitação" onBack={{ label: 'Voltar', fn: pop }}><window.EmptyState icon={<window.IcAlert s={28} />} title="Solicitação indisponível" body="Esta solicitação não está mais disponível." /></window.Page>;
   const user = window.ADM_USERS.find(u => u.id === request.userId);
@@ -45,11 +46,11 @@ function MProfileRequestReview({ requestId, reviewerId, pop, toast }) {
     {['pending', 'awaiting_email'].includes(request.status) ? <div style={{ margin: '0 16px' }}>
       {emailChanged && <p style={{ fontSize: 13, color: 'var(--slate)', lineHeight: 1.6 }}>Após a aprovação, o usuário precisará confirmar o novo e-mail. Até essa confirmação, os dados atuais serão preservados.</p>}
       <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--slate)' }}>Motivo da recusa
-        <textarea rows={3} maxLength={500} value={reason} onChange={e => { setReason(e.target.value); setError(''); }} placeholder="Obrigatório ao recusar" style={{ display: 'block', width: '100%', margin: '8px 0 18px', border: '1px solid var(--line)', borderRadius: 14, padding: 12, fontSize: 15, fontFamily: 'inherit', resize: 'vertical' }} />
+        <textarea ref={reasonInput} rows={3} maxLength={500} value={reason} aria-invalid={error ? true : undefined} aria-describedby={error ? 'review-error' : undefined} onChange={e => { setReason(e.target.value); setError(''); }} placeholder="Obrigatório ao recusar" style={{ display: 'block', width: '100%', margin: '8px 0 18px', border: '1px solid var(--line)', borderRadius: 14, padding: 12, fontSize: 15, fontFamily: 'inherit', resize: 'vertical' }} />
       </label>
-      {error && <p role="alert" style={{ color: 'var(--red)', fontSize: 13, lineHeight: 1.6 }}>{error}</p>}
+      {error && <p id="review-error" role="alert" style={{ color: 'var(--red)', fontSize: 13, lineHeight: 1.6 }}>{error}</p>}
       <div style={{ display: 'flex', gap: 10 }}>
-        <window.Action variant="danger" onClick={() => { if (!reason.trim()) setError('Informe o motivo da recusa.'); else { setError(''); setDecision('reject'); } }}>{request.status === 'awaiting_email' ? 'Cancelar aprovação' : 'Recusar'}</window.Action>
+        <window.Action variant="danger" onClick={() => { if (!reason.trim()) { setError('Informe o motivo da recusa.'); reasonInput.current.focus(); } else { setError(''); setDecision('reject'); } }}>{request.status === 'awaiting_email' ? 'Cancelar aprovação' : 'Recusar'}</window.Action>
         {request.status === 'pending' && <window.Action onClick={() => { setError(''); setDecision('approve'); }}>Aprovar alteração</window.Action>}
       </div>
     </div> : <window.Group header="Análise">
@@ -60,10 +61,9 @@ function MProfileRequestReview({ requestId, reviewerId, pop, toast }) {
         {request.status === 'awaiting_email' && <div style={{ marginTop: 8 }}>Aguardando a confirmação do novo e-mail pelo usuário.</div>}
       </div>
     </window.Group>}
-    <window.Sheet open={!!decision} onClose={() => setDecision(null)} title={decision === 'approve' ? 'Aprovar alteração?' : 'Recusar alteração?'}
-      footer={<><window.Action variant="ghost" onClick={() => setDecision(null)}>Cancelar</window.Action><window.Action variant={decision === 'reject' ? 'danger' : 'primary'} onClick={review}>{decision === 'approve' ? 'Aprovar' : 'Recusar'}</window.Action></>}>
-      <p style={{ margin: '4px 20px 22px', fontSize: 14, lineHeight: 1.6, color: 'var(--slate)' }}>{decision === 'approve' ? emailChanged ? 'A alteração será liberada após a confirmação do novo e-mail pelo usuário.' : 'Os dados solicitados substituirão os dados atuais do cadastro.' : 'O cadastro atual será preservado. O usuário poderá consultar o motivo da recusa.'}</p>
-    </window.Sheet>
+    <window.ConfirmModal open={!!decision} onCancel={() => setDecision(null)} title={decision === 'approve' ? 'Aprovar alteração?' : 'Recusar alteração?'}
+      confirmLabel={decision === 'approve' ? 'Aprovar' : 'Recusar'} danger={decision === 'reject'} onConfirm={review}
+      description={decision === 'approve' ? emailChanged ? 'A alteração será liberada após a confirmação do novo e-mail pelo usuário.' : 'Os dados solicitados substituirão os dados atuais do cadastro.' : 'O cadastro atual será preservado. O usuário poderá consultar o motivo da recusa.'} />
   </window.Page>;
 }
 

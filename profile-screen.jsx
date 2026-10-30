@@ -3,6 +3,19 @@ function RequestStatus({ status }) {
   return meta ? <window.Badge color={meta.color} bg={meta.bg}>{meta.label}</window.Badge> : null;
 }
 
+function ProfileRequestNotice({ userId, onOpen }) {
+  const requests = window.ADM_PROFILE_REQUESTS.filter(r => r.userId === userId).slice().reverse();
+  const request = requests.find(r => ['pending', 'awaiting_email'].includes(r.status)) || requests[0];
+  if (!request) return null;
+  const titles = { pending: 'Alteração em análise', awaiting_email: 'Confirme seu novo e-mail', approved: 'Alteração cadastral aprovada', rejected: 'Alteração cadastral recusada' };
+  const descriptions = { pending: 'A administração está analisando sua solicitação.', awaiting_email: 'Sua solicitação foi aprovada. Falta confirmar o novo endereço.', approved: 'Seus dados foram atualizados. Consulte seu cadastro.', rejected: request.reason };
+  return <window.Card onClick={onOpen} style={{ marginBottom: 18, borderColor: 'var(--line)', borderLeft: '4px solid var(--orange)' }}>
+    <div style={{ fontSize: 14, fontWeight: 750, color: 'var(--ink)', marginBottom: 7 }}>{titles[request.status]}</div>
+    <div style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--slate)', overflowWrap: 'anywhere' }}>{descriptions[request.status]}</div>
+    <div style={{ fontSize: 13, fontWeight: 650, color: 'var(--orange-600)', marginTop: 10 }}>Ver solicitação →</div>
+  </window.Card>;
+}
+
 function ProfileScreen({ user, onBack, onSaved }) {
   const [mode, setMode] = React.useState('view');
   const [name, setName] = React.useState(user?.name || '');
@@ -12,17 +25,20 @@ function ProfileScreen({ user, onBack, onSaved }) {
   const [error, setError] = React.useState('');
   const [notice, setNotice] = React.useState('');
   const [scrolled, setScrolled] = React.useState(false);
+  const { field: formField, validate, clear: clearFieldErrors } = window.useFieldErrors();
   if (!user) return <window.Screen><window.TopBar title="Meus dados" onBack={onBack} /><window.EmptyState icon={<window.IcAlert s={28} />} title="Conta indisponível" body="Este cadastro não está mais disponível." /></window.Screen>;
   const requests = window.ADM_PROFILE_REQUESTS.filter(r => r.userId === user.id).slice().reverse();
   const active = requests.find(r => ['pending', 'awaiting_email'].includes(r.status));
   const request = active || requests[0];
   const labels = { name: 'Nome', email: 'E-mail', phone: 'Telefone' };
   const openRequest = () => {
+    clearFieldErrors();
     setName(user.name); setEmail(user.email); setPhone(user.phone === '—' ? '' : user.phone || '');
     setNote(''); setError(''); setNotice(''); setMode('request');
   };
   const submit = e => {
     e.preventDefault();
+    if (!validate({ Nome: !name.trim() && 'Informe o nome completo.', 'E-mail': !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? 'Informe um e-mail válido.' : window.ADM_USERS.some(u => u.id !== user.id && u.email.toLowerCase() === email.trim().toLowerCase()) && 'Este e-mail já está cadastrado.' })) return;
     const result = window.Demo.requestProfileChange(user.id, { name, email, phone }, note);
     if (result.error) return setError(result.error);
     setError(''); setMode('view'); setNotice('Solicitação enviada para análise da administração.');
@@ -33,7 +49,11 @@ function ProfileScreen({ user, onBack, onSaved }) {
     onSaved('Alteração cadastral concluída.');
   };
   const fieldStyle = { display: 'block', width: '100%', marginTop: 8, padding: '14px 12px', border: '1px solid var(--line)', borderRadius: 12, background: '#fff', color: 'var(--ink)' };
-  const field = (label, value, set, type, autoComplete) => <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--slate)', marginBottom: 18 }}>{label}<input type={type} autoComplete={autoComplete} value={value} onChange={e => { set(e.target.value); setError(''); }} style={fieldStyle} /></label>;
+  const field = (label, value, set, type, autoComplete) => {
+    const props = formField(label, set);
+    const id = 'profile-' + autoComplete;
+    return <div style={{ marginBottom: 18 }}><label htmlFor={id} style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--slate)' }}>{label}</label><input id={id} type={type} autoComplete={autoComplete} value={value} aria-invalid={props.error ? true : undefined} aria-describedby={props.error ? id + '-error' : undefined} onChange={e => { props.onChange(e.target.value); setError(''); }} style={fieldStyle} />{props.error && <div id={id + '-error'} role="alert" style={{ marginTop: 6, fontSize: 12, color: 'var(--red)' }}>{props.error}</div>}</div>;
+  };
   return <window.Screen onScroll={e => setScrolled(e.currentTarget.scrollTop > 8)}>
     <window.TopBar title={mode === 'request' ? 'Solicitar alteração' : mode === 'email' ? 'Confirmar e-mail' : 'Meus dados'} onBack={() => { if (mode === 'view') onBack(); else { setError(''); setMode('view'); } }} scrolled={scrolled} />
     {mode === 'email' && active ? <window.EmailNotice title="Confirme seu novo e-mail" email={active.requested.email}>
@@ -60,4 +80,4 @@ function ProfileScreen({ user, onBack, onSaved }) {
     </div>}
   </window.Screen>;
 }
-Object.assign(window, { ProfileScreen, RequestStatus });
+Object.assign(window, { ProfileScreen, RequestStatus, ProfileRequestNotice });

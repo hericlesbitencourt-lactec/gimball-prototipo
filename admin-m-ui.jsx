@@ -52,7 +52,7 @@ function NavBar({ title, sub, onBack, right, scrolled, large = true }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 14px 8px', minHeight: 38 }}>
         {onBack && (
           <button className="tap" onClick={onBack.fn} aria-label="Voltar" style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'none', border: 0,
-            color: 'var(--orange-600)', cursor: 'pointer', fontWeight: 600, fontSize: 16, padding: '4px 6px 4px 0', marginLeft: -2 }}>
+            color: 'var(--orange-600)', cursor: 'pointer', minHeight: 44, fontWeight: 600, fontSize: 16, padding: '4px 6px 4px 0', marginLeft: -2 }}>
             <window.IcChevL s={24} /> <span className="nav-back-label">{onBack.label || 'Voltar'}</span>
           </button>
         )}
@@ -64,7 +64,7 @@ function NavBar({ title, sub, onBack, right, scrolled, large = true }) {
       {large && (
         <div style={{ padding: '2px 18px 10px', maxHeight: scrolled ? 0 : 80, opacity: scrolled ? 0 : 1, overflow: 'hidden', transition: 'max-height .25s, opacity .2s' }}>
           {sub && <div className="mono" style={{ fontSize: 11, color: 'var(--slate)', letterSpacing: '.04em', textTransform: 'uppercase', marginBottom: 3 }}>{sub}</div>}
-          <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-.03em', color: 'var(--ink)', lineHeight: 1.05 }}>{title}</div>
+          <div className="page-title" style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-.03em', color: 'var(--ink)', lineHeight: 1.15 }}>{title}</div>
         </div>
       )}
     </div>
@@ -73,8 +73,8 @@ function NavBar({ title, sub, onBack, right, scrolled, large = true }) {
 
 /* round header icon button */
 function NavBtn({ icon, onClick, label, accent }) {
-  return <button className="tap" aria-label={label} onClick={onClick} style={{ width: 36, height: 36, borderRadius: 11, border: '1px solid var(--line)',
-    background: accent ? 'var(--orange)' : '#fff', color: accent ? '#fff' : 'var(--ink)', display: 'grid', placeItems: 'center', cursor: 'pointer',
+  return <button className="tap" aria-label={label} onClick={onClick} style={{ width: 44, height: 44, borderRadius: 13, border: '1px solid var(--line)',
+    background: accent ? 'var(--orange)' : '#fff', color: 'var(--ink)', display: 'grid', placeItems: 'center', cursor: 'pointer',
     boxShadow: '0 1px 2px rgba(16,35,57,.05)' }}>{icon}</button>;
 }
 
@@ -88,7 +88,7 @@ function Group({ header, footer, children, style = {} }) {
     </div>
   );
 }
-function Row({ left, icon, iconBg, iconColor, title, sub, value, valueColor, chevron, onClick, danger, trailing, last, confirmation }) {
+function Row({ left, icon, iconBg, iconColor, title, sub, value, valueColor, chevron, onClick, danger, trailing, last, confirmation, multiline = false, details }) {
   const [confirming, setConfirming] = React.useState(false);
   const prompt = confirmation || (danger && title.startsWith('Remover') ? {
     title: title + '?', body: 'Este cadastro será removido. Esta ação não pode ser desfeita.', action: 'Remover',
@@ -104,17 +104,17 @@ function Row({ left, icon, iconBg, iconColor, title, sub, value, valueColor, che
       {icon && <div style={{ width: 32, height: 32, borderRadius: 9, flex: '0 0 auto', display: 'grid', placeItems: 'center', background: iconBg || '#F2F5F8', color: iconColor || 'var(--navy-700)' }}>{icon}</div>}
       {left}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 15, fontWeight: 550, color: danger ? 'var(--red)' : 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
-        {sub && <div style={{ fontSize: 12.5, color: 'var(--slate)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div>}
+        <div style={{ fontSize: 15, fontWeight: 550, lineHeight: 1.45, color: danger ? 'var(--red)' : 'var(--ink)', whiteSpace: multiline ? 'normal' : 'nowrap', overflowWrap: 'anywhere', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
+        {sub && <div style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--slate)', marginTop: 3, whiteSpace: multiline ? 'normal' : 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sub}</div>}
+        {details}
       </div>
       {trailing}
       {value != null && <div style={{ fontSize: 14.5, color: valueColor || 'var(--slate)', fontWeight: 500, flex: '0 0 auto', maxWidth: 150, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right' }}>{value}</div>}
       {chevron && <span style={{ color: 'var(--slate-300)', flex: '0 0 auto', marginLeft: -2 }}><window.IcChevR s={19} /></span>}
     </div>
-    {prompt && <Sheet open={confirming} onClose={() => setConfirming(false)} title={prompt.title}
-      footer={<><Action variant="ghost" onClick={() => setConfirming(false)}>Cancelar</Action><Action variant={danger ? 'danger' : 'primary'} onClick={() => { setConfirming(false); onClick?.(); }}>{prompt.action}</Action></>}>
-      <p style={{ margin: '4px 20px 22px', color: 'var(--slate)', fontSize: 14, lineHeight: 1.6 }}>{prompt.body}</p>
-    </Sheet>}
+    {prompt && <window.ConfirmModal open={confirming} onCancel={() => setConfirming(false)} title={prompt.title}
+      description={prompt.body} danger={danger || prompt.action === 'Desativar'} confirmLabel={prompt.action}
+      onConfirm={() => { setConfirming(false); onClick?.(); }} />}
     </>
   );
 }
@@ -126,9 +126,21 @@ function Search({ value, onChange, placeholder }) {
       <span style={{ color: 'var(--slate-300)', display: 'flex' }}><MIc.search s={18} /></span>
       <input aria-label={placeholder || "Buscar"} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || 'Buscar'} spellCheck={false}
         style={{ flex: 1, border: 0, outline: 'none', background: 'transparent', padding: '9px 0', fontSize: 15.5, fontFamily: 'var(--sans)', color: 'var(--ink)' }} />
-      {value && <button aria-label="Limpar busca" onClick={() => onChange('')} style={{ border: 0, background: 'none', color: 'var(--slate-300)', cursor: 'pointer', display: 'flex', padding: 2 }}><window.IcClose s={16} /></button>}
+      {value && <button aria-label="Limpar busca" onClick={() => onChange('')} style={{ border: 0, background: 'none', color: 'var(--slate)', cursor: 'pointer', display: 'grid', placeItems: 'center', width: 44, height: 44, marginRight: -11 }}><window.IcClose s={18} /></button>}
     </div>
   );
+}
+
+function PlantRow({ plant, onClick, last }) {
+  return <Row multiline title={plant.name} sub={window.imovelName(plant.imovel)} onClick={onClick} last={last} chevron
+    icon={<MIc.cube s={18} />} iconBg="var(--navy-900)" iconColor="#fff"
+    details={<>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 9 }}>
+        <KPill kind={plant.kind} /><window.Badge color="var(--navy-700)" bg="#E9EEF4">{plant.version}</window.Badge><SPill s={plant.status} />
+      </div>
+      <div style={{ fontSize: 12, color: 'var(--slate)', lineHeight: 1.5, marginTop: 8 }}>{window.DISC_META[plant.disc].name} · {plant.format.toUpperCase()}{plant.size !== '—' ? ` · ${plant.size}` : ''}</div>
+      <div style={{ fontSize: 12, color: 'var(--slate)', lineHeight: 1.5, marginTop: 3 }}>Atualizado em {plant.updated} · {plant.marker ? `Marcador ${plant.marker.code}` : 'Sem marcador'}</div>
+    </>} />;
 }
 
 /* ── segmented control ── */
@@ -136,7 +148,7 @@ function Segment({ value, set, opts }) {
   return (
     <div style={{ margin: '0 16px 16px', display: 'flex', gap: 2, background: 'rgba(118,118,128,.1)', borderRadius: 10, padding: 2 }}>
       {opts.map(([v, l]) => (
-        <button key={v} onClick={() => set(v)} style={{ flex: 1, padding: '7px 4px', borderRadius: 8, border: 0, cursor: 'pointer', fontFamily: 'var(--sans)',
+        <button key={v} aria-pressed={value === v} onClick={() => set(v)} style={{ flex: 1, minHeight: 44, padding: '7px 4px', borderRadius: 8, border: 0, cursor: 'pointer', fontFamily: 'var(--sans)',
           fontSize: 13, fontWeight: value === v ? 650 : 550, color: value === v ? 'var(--ink)' : 'var(--slate)',
           background: value === v ? '#fff' : 'transparent', boxShadow: value === v ? '0 1px 3px rgba(0,0,0,.12)' : 'none', transition: '.15s' }}>{l}</button>
       ))}
@@ -177,7 +189,7 @@ function Sheet({ open, onClose, title, children, footer, height }) {
           <div style={{ width: 38, height: 5, borderRadius: 99, background: 'var(--line)', margin: '0 auto 6px' }} />
           {title && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 16px 12px' }}>
             <div style={{ fontSize: 19, fontWeight: 800, letterSpacing: '-.02em', color: 'var(--ink)' }}>{title}</div>
-            <button aria-label="Fechar" className="tap" onClick={onClose} style={{ width: 30, height: 30, borderRadius: 99, border: 0, background: 'rgba(118,118,128,.12)', color: 'var(--slate)', display: 'grid', placeItems: 'center', cursor: 'pointer' }}><window.IcClose s={18} /></button>
+            <button aria-label="Fechar" className="tap" onClick={onClose} style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 99, border: 0, background: 'rgba(118,118,128,.12)', color: 'var(--slate)', display: 'grid', placeItems: 'center', cursor: 'pointer' }}><window.IcClose s={18} /></button>
           </div>}
         </div>
         <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 8 }}>{children}</div>
@@ -188,21 +200,27 @@ function Sheet({ open, onClose, title, children, footer, height }) {
 }
 
 /* ── form controls (inside Group rows) ── */
-function FInput({ label, value, onChange, placeholder, type = 'text', last }) {
+function FInput({ label, value, onChange, placeholder, type = 'text', last, error }) {
+  const id = React.useId();
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderBottom: last ? 'none' : '1px solid #F1F3F6' }}>
-      <div style={{ fontSize: 15, color: 'var(--ink)', fontWeight: 550, flex: '0 0 38%' }}>{label}</div>
-      <input aria-label={label} type={type} value={value} onChange={e => onChange && onChange(e.target.value)} placeholder={placeholder} spellCheck={false}
-        style={{ flex: 1, border: 0, outline: 'none', background: 'transparent', fontFamily: 'var(--sans)', fontSize: 15, color: 'var(--ink)', textAlign: 'right', minWidth: 0 }} />
+    <div style={{ padding: '12px 14px', borderBottom: last ? 'none' : '1px solid #F1F3F6' }}>
+      <label htmlFor={id} style={{ display: 'block', fontSize: 12, color: 'var(--slate)', fontWeight: 650, marginBottom: 5 }}>{label}</label>
+      <input id={id} aria-invalid={error ? true : undefined} aria-describedby={error ? id + '-error' : undefined} type={type} value={value} onChange={e => onChange?.(e.target.value)} placeholder={placeholder} spellCheck={false}
+        style={{ display: 'block', width: '100%', minHeight: 44, padding: '7px 0', border: 0, outline: 'none', background: 'transparent', fontFamily: 'var(--sans)', fontSize: 16, color: 'var(--ink)', minWidth: 0 }} />
+      {error && <div id={id + '-error'} role="alert" style={{ color: 'var(--red)', fontSize: 12, lineHeight: 1.5, marginTop: 5 }}>{error}</div>}
     </div>
   );
 }
-function FSelect({ label, value, display, onClick, last }) {
+function FSelect({ label, value, display, onClick, last, error }) {
+  const id = React.useId();
   return (
-    <div role="button" tabIndex={0} aria-label={label} onKeyDown={e => { if (["Enter", " "].includes(e.key)) { e.preventDefault(); onClick?.(); } }} className="tap" onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: last ? 'none' : '1px solid #F1F3F6', cursor: 'pointer' }}>
+    <div style={{ borderBottom: last ? 'none' : '1px solid #F1F3F6' }}>
+    <div role="button" tabIndex={0} aria-label={label} aria-invalid={error ? true : undefined} aria-describedby={error ? id : undefined} onKeyDown={e => { if (["Enter", " "].includes(e.key)) { e.preventDefault(); onClick?.(); } }} className="tap" onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 52, padding: '12px 14px', cursor: 'pointer' }}>
       <div style={{ fontSize: 15, color: 'var(--ink)', fontWeight: 550, flex: '0 0 auto' }}>{label}</div>
-      <div style={{ flex: 1, textAlign: 'right', fontSize: 15, color: 'var(--slate)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{display}</div>
+      <div style={{ flex: 1, minWidth: 0, textAlign: 'right', fontSize: 15, color: 'var(--slate)', overflowWrap: 'anywhere' }}>{display}</div>
       <span style={{ color: 'var(--slate-300)', flex: '0 0 auto', marginLeft: -4 }}><window.IcChevR s={18} /></span>
+    </div>
+    {error && <div id={id} role="alert" style={{ padding: '0 14px 12px', color: 'var(--red)', fontSize: 12 }}>{error}</div>}
     </div>
   );
 }
@@ -210,9 +228,10 @@ function FToggle({ label, on, onToggle, last, disabled }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderBottom: last ? 'none' : '1px solid #F1F3F6' }}>
       <div style={{ flex: 1, fontSize: 15, color: 'var(--ink)', fontWeight: 550 }}>{label}</div>
-      <button role="switch" aria-label={label} aria-checked={on} onClick={() => !disabled && onToggle()} disabled={disabled} style={{ width: 50, height: 30, borderRadius: 99, border: 0, cursor: disabled ? 'default' : 'pointer',
-        background: on ? 'var(--green)' : 'rgba(118,118,128,.22)', position: 'relative', transition: 'background .2s', opacity: disabled ? .55 : 1 }}>
-        <span style={{ position: 'absolute', top: 2, left: on ? 22 : 2, width: 26, height: 26, borderRadius: 99, background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.3)', transition: 'left .2s' }} />
+      <button role="switch" aria-label={label} aria-checked={on} onClick={() => !disabled && onToggle()} disabled={disabled} style={{ width: 50, height: 44, flexShrink: 0, border: 0, cursor: disabled ? 'default' : 'pointer',
+        background: 'transparent', padding: '7px 0', position: 'relative', opacity: disabled ? .55 : 1 }}>
+        <span style={{ display: 'block', height: 30, borderRadius: 99, background: on ? 'var(--green)' : 'rgba(118,118,128,.22)', transition: 'background .2s' }} />
+        <span style={{ position: 'absolute', top: 9, left: on ? 22 : 2, width: 26, height: 26, borderRadius: 99, background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.3)', transition: 'left .2s' }} />
       </button>
     </div>
   );
@@ -241,7 +260,7 @@ function Picker({ open, onClose, title, options, value, onPick, searchable = fal
 
 /* big primary action button used in forms/sheets */
 function Action({ children, onClick, variant = 'primary', disabled, icon }) {
-  const skins = { primary: { background: 'var(--orange)', color: '#fff', boxShadow: '0 6px 16px rgba(232,132,58,.3)' },
+  const skins = { primary: { background: 'var(--orange)', color: 'var(--ink)', boxShadow: '0 6px 16px rgba(253,120,48,.18)' },
     dark: { background: 'var(--navy-800)', color: '#fff' }, ghost: { background: 'rgba(118,118,128,.12)', color: 'var(--ink)' },
     danger: { background: 'var(--red-100)', color: 'var(--red)' } };
   return <button className="tap" onClick={onClick} disabled={disabled} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -272,7 +291,7 @@ function TabBar({ active, onTab }) {
         const on = active === id;
         return (
           <button aria-current={on ? "page" : undefined} key={id} className="tap" onClick={() => onTab(id)} style={{ flex: 1, border: 0, background: 'none', cursor: 'pointer',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: on ? 'var(--orange)' : 'var(--slate)', padding: '2px 0' }}>
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, minHeight: 48, color: on ? 'var(--orange-600)' : 'var(--slate)', padding: '2px 0' }}>
             <Ic s={24} w={on ? 2.1 : 1.8} />
             <span style={{ fontSize: 10.5, fontWeight: on ? 650 : 500, letterSpacing: '-.01em' }}>{label}</span>
           </button>
@@ -284,5 +303,5 @@ function TabBar({ active, onTab }) {
 
 Object.assign(window, {
   MIc, SPill, RPill, DPill, KPill, MAvatar, NavBar, NavBtn, Group, Row, Search, Segment,
-  Sheet, FInput, FSelect, FToggle, Picker, Action, Tile, TabBar,
+  Sheet, FInput, FSelect, FToggle, Picker, Action, Tile, TabBar, PlantRow,
 });

@@ -1,10 +1,23 @@
-:root { --orange:#fd7830; --orange-600:#b9470e; --orange-100:#fff0e7; --ink:#292b30; --slate:#596571; --slate-300:#737e89; --bg:#f4f6f8; --navy-900:#0d141a; --navy-800:#203542; --navy-700:#345d77; --sans:'Montserrat',-apple-system,system-ui,sans-serif; }
+:root { --orange:#fd7830; --orange-600:#b9470e; --orange-100:#fff0e7; --ink:#292b30; --slate:#596571; --slate-300:#65717d; --green:#217448; --amber:#805b0b; --red:#b33626; --bg:#f4f6f8; --navy-900:#0d141a; --navy-800:#203542; --navy-700:#345d77; --sans:'Montserrat',-apple-system,system-ui,sans-serif; }
 body { background:#14242e; }
 button,input,select { font-family:inherit; }
 button, [role=button] { touch-action:manipulation; }
+.app-surface button,.app-surface [role=button] { min-height:44px; }
 button:focus-visible,[role=button]:focus-visible,a:focus-visible { outline:3px solid #457b9d; outline-offset:3px; }
 input:focus-visible { outline:2px solid #457b9d!important; outline-offset:4px; border-radius:4px; }
 input { min-width:0; font-size:16px!important; }
+textarea { font-family:inherit; font-size:16px!important; }
+input[aria-invalid=true],textarea[aria-invalid=true] { border-color:var(--red)!important; box-shadow:0 2px 0 var(--red); }
+[role=button][aria-invalid=true] { box-shadow:inset 0 0 0 2px var(--red); border-radius:10px; }
+.tap { -webkit-tap-highlight-color:transparent; }
+.tap:active { filter:brightness(.94); }
+.camera-content { scrollbar-width:thin; }
+@media(max-height:740px) { .camera-aim { flex-basis:160px!important; } .camera-target { transform:scale(.7); } }
+@media(max-height:680px) {
+  .camera-content { padding-top:114px!important; padding-bottom:28px!important; }
+  .camera-aim { flex-basis:88px!important; }
+  .camera-target { transform:scale(.38); }
+}
 .layer[aria-hidden=true] { visibility:hidden; }
 .brand-image { display:block; object-fit:contain; max-width:100%; }
 .demo-label { font-size:11px; font-weight:600; letter-spacing:.04em; color:#596571; }
@@ -16,4 +29,4 @@ input { min-width:0; font-size:16px!important; }
   .app-surface { height:100%; }
 }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
-@media(max-width:360px) { .nav-back-label { display:none; } }
+@media(max-width:360px) { .nav-back-label { display:none; } .page-title { font-size:26px!important; } }
