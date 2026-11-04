@@ -45,36 +45,40 @@ function MAvatar({ initials, size = 38, role }) {
 /* ── iOS large-title header that condenses on scroll ── */
 function NavBar({ title, sub, onBack, right, scrolled, large = true }) {
   return (
-    <div style={{ position: 'sticky', top: 0, zIndex: 30, paddingTop: 52,
-      background: scrolled ? 'rgba(243,244,246,.85)' : 'transparent',
+    <>
+    <div className="nav-toolbar" style={{ position: 'sticky', top: 0, zIndex: 30, paddingTop: 52,
+      background: scrolled ? 'rgba(244,246,248,.96)' : 'var(--bg)',
       backdropFilter: scrolled ? 'blur(16px) saturate(160%)' : 'none', WebkitBackdropFilter: scrolled ? 'blur(16px) saturate(160%)' : 'none',
       borderBottom: `1px solid ${scrolled ? 'var(--line)' : 'transparent'}`, transition: 'background .25s, border-color .25s' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 14px 8px', minHeight: 38 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 14px 8px', height: 58 }}>
+        <div style={{ minWidth: 44, flexShrink: 0 }}>
         {onBack && (
           <button className="tap" onClick={onBack.fn} aria-label="Voltar" style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'none', border: 0,
             color: 'var(--orange-600)', cursor: 'pointer', minHeight: 44, fontWeight: 600, fontSize: 16, padding: '4px 6px 4px 0', marginLeft: -2 }}>
             <window.IcChevL s={24} /> <span className="nav-back-label">{onBack.label || 'Voltar'}</span>
           </button>
         )}
-        {scrolled && !large && <div style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>{title}</div>}
-        {scrolled && large && <div style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 700, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 8px' }}>{title}</div>}
-        {!scrolled && <div style={{ flex: 1, minWidth: 0, textAlign: "center", fontSize: 15, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{!large && title}</div>}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>{right}</div>
+        </div>
+        <div className="nav-compact-title" style={{ flex: 1, minWidth: 0, textAlign: 'center', fontSize: 16, fontWeight: 700, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{!large || scrolled ? title : ''}</div>
+        <div style={{ display: 'flex', gap: 8, minWidth: 44, flexShrink: 0, alignItems: 'center', justifyContent: 'flex-end' }}>{right}</div>
       </div>
-      {large && (
-        <div style={{ padding: '2px 18px 10px', maxHeight: scrolled ? 0 : 80, opacity: scrolled ? 0 : 1, overflow: 'hidden', transition: 'max-height .25s, opacity .2s' }}>
+    </div>
+    {large && (
+        <div className="nav-large-title" style={{ minHeight: 68, padding: '2px 18px 10px' }}>
+          {!scrolled && <>
           {sub && <div className="mono" style={{ fontSize: 11, color: 'var(--slate)', letterSpacing: '.04em', textTransform: 'uppercase', marginBottom: 3 }}>{sub}</div>}
           <div className="page-title" style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-.03em', color: 'var(--ink)', lineHeight: 1.15 }}>{title}</div>
+          </>}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
 /* round header icon button */
 function NavBtn({ icon, onClick, label, accent }) {
   return <button className="tap" aria-label={label} onClick={onClick} style={{ width: 44, height: 44, borderRadius: 13, border: '1px solid var(--line)',
-    background: accent ? 'var(--orange)' : '#fff', color: 'var(--ink)', display: 'grid', placeItems: 'center', cursor: 'pointer',
+    background: accent ? 'var(--orange-action)' : '#fff', color: accent ? '#fff' : 'var(--ink)', display: 'grid', placeItems: 'center', cursor: 'pointer',
     boxShadow: '0 1px 2px rgba(16,35,57,.05)' }}>{icon}</button>;
 }
 
@@ -260,7 +264,7 @@ function Picker({ open, onClose, title, options, value, onPick, searchable = fal
 
 /* big primary action button used in forms/sheets */
 function Action({ children, onClick, variant = 'primary', disabled, icon }) {
-  const skins = { primary: { background: 'var(--orange)', color: 'var(--ink)', boxShadow: '0 6px 16px rgba(253,120,48,.18)' },
+  const skins = { primary: { background: 'var(--orange-action)', color: '#fff', boxShadow: '0 6px 16px rgba(196,76,18,.18)' },
     dark: { background: 'var(--navy-800)', color: '#fff' }, ghost: { background: 'rgba(118,118,128,.12)', color: 'var(--ink)' },
     danger: { background: 'var(--red-100)', color: 'var(--red)' } };
   return <button className="tap" onClick={onClick} disabled={disabled} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,

@@ -3,6 +3,10 @@ const top = p => p.locator('.layer[aria-hidden="false"]');
 const back = async p => { await top(p).getByRole('button', { name: 'Voltar', exact: true }).click(); await p.waitForTimeout(500); };
 async function admin(p) { await p.goto('/admin.html'); await expect(top(p).getByText('Gestão', { exact: true })).toBeVisible(); }
 async function login(p) { await p.goto('/'); await p.getByRole('button', { name: 'Morador', exact: true }).click(); await p.getByRole('button', { name: 'Entrar', exact: true }).click(); await expect(p.getByText('Meus imóveis', { exact: true })).toBeVisible(); await expect(p.locator('.stagger')).toBeVisible(); }
+async function allowCamera(p) {
+  await top(p).getByRole('button', { name: 'Permitir câmera', exact: true }).click();
+  await p.getByRole('dialog', { name: 'Permitir acesso à câmera?', exact: true }).getByRole('button', { name: 'Permitir', exact: true }).click();
+}
 test.beforeEach(async ({ page }) => {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
@@ -36,6 +40,7 @@ test('morador: login validado, falha de leitura, ajuda, AR e retorno', async ({ 
   await page.getByRole('button').filter({ hasText: 'Residencial Aurora' }).click();
   await top(page).getByRole('button').filter({ hasText: 'Hidrossanitário' }).click();
   await top(page).getByRole('button', { name: 'Visualizar planta', exact: true }).click();
+  await allowCamera(page);
   await expect(top(page).getByText('Hall hidráulico, parede norte', { exact: true })).toBeVisible();
   await expect(top(page).getByText('tag36h11 · id 21 · 16,0 cm', { exact: true })).toBeVisible();
   await top(page).getByRole('button', { name: 'Não consigo ler o marcador' }).click();
@@ -65,7 +70,9 @@ test('usuários: validação, criar, editar, recarregar e remover com confirmaç
   await top(page).getByLabel('Nome', { exact: true }).fill('Ana Teste');
   await top(page).getByLabel('E-mail', { exact: true }).fill('ana@example.com');
   await top(page).getByRole('button', { name: 'Criar', exact: true }).click();
-  await expect(top(page).getByRole('heading', { name: 'E-mail de confirmação enviado' })).toBeVisible();
+  await expect(top(page).getByRole('heading', { name: 'Convite enviado' })).toBeVisible();
+  await expect(top(page).getByText('Aguardando ativação', { exact: true })).toBeVisible();
+  await expect(top(page).getByRole('button', { name: 'Simular clique no e-mail', exact: true })).toBeVisible();
   await expect(page.getByRole('status')).toHaveCount(0);
   await expect(top(page).getByText('ana@example.com', { exact: true })).toBeVisible();
   await expect(top(page).getByText(/demonstração|dados fictícios/i)).toHaveCount(0);
@@ -168,7 +175,10 @@ test('planta: upload simulado, marcador, edição, AR do admin', async ({ page }
   await top(page).getByRole('button', { name: 'Salvar', exact: true }).click();
   await top(page).getByText('Hidrossanitário · Modelo técnico', { exact: true }).click();
   await expect(top(page).getByLabel('Localização', { exact: true })).toHaveValue('Hall norte');
+  await top(page).getByRole('button', { name: /^Liberar planta/ }).click();
+  await page.getByRole('dialog', { name: 'Liberar planta?', exact: true }).getByRole('button', { name: 'Liberar', exact: true }).click();
   await top(page).getByRole('button', { name: 'Visualizar em AR', exact: false }).click();
+  await allowCamera(page);
   await top(page).getByRole('button', { name: 'Abrir prévia' }).click();
   await expect(top(page).getByText('Prévia AR · Modelo ilustrativo')).toBeVisible();
   await back(page);
@@ -247,17 +257,17 @@ test('morador sem vínculos apresenta estado vazio', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Falar com o suporte' })).toHaveAttribute('href', 'mailto:contato@gimball.com.br');
 });
 
-test('ações da conta: reenvio simulado, desativação e reativação persistem', async ({ page }) => {
+test('ações da conta: recuperação de senha, desativação e reativação persistem', async ({ page }) => {
   await admin(page);
   await top(page).getByRole('button').filter({ hasText: 'Usuários' }).click();
   await top(page).getByText('Marina Alves', { exact: true }).click();
   await expect(top(page).getByRole('button', { name: 'Status', exact: true })).toHaveCount(0);
   await expect(top(page).getByText('Ativo', { exact: true })).toBeVisible();
-  await top(page).getByRole('button', { name: /^Reenviar e-mail de confirmação/ }).click();
+  await top(page).getByRole('button', { name: /^Enviar recuperação de senha/ }).click();
   await expect(page.getByRole('dialog')).toContainText('marina.alves@email.com');
-  await page.getByRole('dialog').getByRole('button', { name: 'Reenviar confirmação' }).click();
-  await expect(page.getByRole('status')).toContainText('Instruções de confirmação reenviadas.');
-  expect(await page.evaluate(() => !!window.ADM_USERS.find(u => u.id === 'u1').confirmationResentAt)).toBe(true);
+  await page.getByRole('dialog').getByRole('button', { name: 'Enviar', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Instruções de recuperação de senha enviadas.');
+  expect(await page.evaluate(() => !!window.ADM_USERS.find(u => u.id === 'u1').passwordResetSentAt)).toBe(true);
   await top(page).getByRole('button', { name: 'Desativar usuário', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Desativar', exact: true }).click();
   await expect(top(page).getByText('Inativo', { exact: true })).toBeVisible();
@@ -301,20 +311,29 @@ for (const width of [320, 390]) {
     await page.getByRole('textbox', { name: 'E-mail', exact: true }).fill('invalido');
     await page.getByRole('button', { name: 'Enviar instruções' }).click();
     await expect(page.getByRole('alert')).toHaveText('Informe um e-mail válido.');
-    await page.getByRole('textbox', { name: 'E-mail', exact: true }).fill('teste@example.com');
+    await page.getByRole('textbox', { name: 'E-mail', exact: true }).fill('marina.alves@email.com');
     await page.getByRole('button', { name: 'Enviar instruções' }).click();
     await expect(page.getByRole('heading', { name: 'Confira seu e-mail' })).toBeVisible();
-    await expect(page.getByText('teste@example.com', { exact: true })).toBeVisible();
+    await expect(page.getByText('marina.alves@email.com', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Reenviar em/ })).toBeDisabled();
     await page.screenshot({ path: `test-results/recuperacao-enviada-${width}.png` });
     await page.getByRole('button', { name: 'Corrigir e-mail' }).click();
-    await expect(page.getByRole('textbox', { name: 'E-mail', exact: true })).toHaveValue('teste@example.com');
+    await expect(page.getByRole('textbox', { name: 'E-mail', exact: true })).toHaveValue('marina.alves@email.com');
     await page.getByRole('button', { name: 'Enviar instruções' }).click();
     await page.getByRole('button', { name: 'Continuar para nova senha' }).click();
     await page.getByLabel('Nova senha', { exact: true }).fill('curta');
     await page.getByRole('button', { name: 'Salvar nova senha' }).click();
     await expect(page.getByRole('alert')).toContainText('pelo menos 8');
     await page.getByLabel('Nova senha', { exact: true }).fill('nova12345');
+    await page.getByRole('button', { name: 'Mostrar nova senha', exact: true }).click();
+    await expect(page.getByLabel('Nova senha', { exact: true })).toHaveAttribute('type', 'text');
+    await expect(page.getByLabel('Confirmar nova senha', { exact: true })).toHaveAttribute('type', 'password');
+    await page.getByRole('button', { name: 'Ocultar nova senha', exact: true }).click();
+    await page.getByRole('button', { name: 'Mostrar confirmação da nova senha', exact: true }).click();
+    await expect(page.getByLabel('Confirmar nova senha', { exact: true })).toHaveAttribute('type', 'text');
+    await expect(page.getByLabel('Nova senha', { exact: true })).toHaveAttribute('type', 'password');
+    await page.getByRole('button', { name: 'Ocultar confirmação da nova senha', exact: true }).click();
+    await expect(page.getByRole('checkbox', { name: 'Mostrar senhas', exact: true })).toHaveCount(0);
     await page.getByLabel('Confirmar nova senha', { exact: true }).fill('diferente');
     await page.getByRole('button', { name: 'Salvar nova senha' }).click();
     await expect(page.getByRole('alert')).toHaveText('As senhas não coincidem.');
@@ -322,10 +341,14 @@ for (const width of [320, 390]) {
     await page.getByRole('button', { name: 'Salvar nova senha' }).click();
     await expect(page.getByRole('heading', { name: 'Senha redefinida' })).toBeVisible();
     await page.getByRole('button', { name: 'Voltar ao login' }).click();
-    await expect(page.getByRole('textbox', { name: 'E-mail', exact: true })).toHaveValue('teste@example.com');
+    await expect(page.getByRole('textbox', { name: 'E-mail', exact: true })).toHaveValue('marina.alves@email.com');
     await expect(page.getByLabel('Senha', { exact: true })).toHaveValue('nova12345');
     await page.getByRole('button', { name: 'Morador', exact: true }).click();
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+    await expect(page.getByText('Meus imóveis', { exact: true })).toBeVisible();
+    await page.reload();
+    await expect(page.getByLabel('Senha', { exact: true })).toHaveValue('nova12345');
+    await page.getByRole('button', { name: 'Entrar', exact: true }).click();
     await expect(page.getByText('Meus imóveis', { exact: true })).toBeVisible();
   });
 }
@@ -378,6 +401,7 @@ test('construtoras podem ser pesquisadas ao adicionar e editar empreendimentos',
   await search.fill('lume');
   await dialog.getByText('Incorporadora Lume', { exact: true }).click();
   await top(page).getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect(page.locator('.lyr-out')).toHaveCount(0);
   await top(page).getByRole('button', { name: 'Editar Residencial Busca', exact: true }).click();
   await expect(top(page).getByRole('button', { name: 'Construtora', exact: true })).toContainText('Incorporadora Lume');
 });
@@ -505,6 +529,7 @@ test('entrada apresenta os três acessos sem avisos repetitivos', async ({ page 
   await page.getByRole('button', { name: 'Administrador', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'E-mail', exact: true })).toHaveValue('carla.admin@gimball.com.br');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await page.waitForURL('**/admin.html', { waitUntil: 'domcontentloaded' });
   await expect(top(page).getByText('Gestão', { exact: true })).toBeVisible();
 });
 
@@ -530,6 +555,7 @@ test('engenheiro: projetos, marcadores, AR e meus dados sem gestão administrati
   await top(page).getByText('Projeto executivo revisado', { exact: true }).click();
   await expect(top(page).getByLabel('Localização', { exact: true })).toHaveValue('Hall de entrada');
   await top(page).getByRole('button', { name: /^Visualizar em AR/ }).click();
+  await allowCamera(page);
   await top(page).getByRole('button', { name: 'Abrir prévia' }).click();
   await expect(top(page).getByText('Prévia AR · Modelo ilustrativo')).toBeVisible();
   await back(page);
@@ -673,6 +699,7 @@ for (const config of [
     await expect(modal.getByRole('button', { name: 'Cancelar', exact: true })).toBeFocused();
     await page.screenshot({ path: `test-results/saida-modal-${config.role}.png` });
     await modal.getByRole('button', { name: 'Sair', exact: true }).click();
+    if (config.role !== 'morador') await page.waitForURL('**/index.html', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('button', { name: 'Entrar', exact: true })).toBeVisible();
     expect(await page.evaluate(id => window.ADM_USERS.find(u => u.id === id).phone, config.id)).toBe('(41) 99999-1234');
   });

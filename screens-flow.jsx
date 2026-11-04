@@ -1,40 +1,55 @@
 function LoginScreen({ onLogin }) {
-  const [role, setRole] = React.useState('morador');
-  const [email, setEmail] = React.useState(() => window.residentUser().email || '');
-  const [password, setPassword] = React.useState('demo1234');
-  const [showPassword, setShowPassword] = React.useState(false);
+  const query = new URLSearchParams(window.location.search);
+  const [role, setRole] = React.useState(() => ['admin', 'engenheiro', 'morador'].includes(query.get('perfil')) ? query.get('perfil') : 'morador');
+  const [email, setEmail] = React.useState(() => query.get('email') || window.residentUser().email || '');
+  const [password, setPassword] = React.useState(() => query.has('email') ? '' : window.Demo.examplePassword(window.residentUser().id));
   const [recovery, setRecovery] = React.useState(false);
+  const [legal, setLegal] = React.useState(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState('');
+  const [errorField, setErrorField] = React.useState('');
+  const [notice] = React.useState(() => {
+    const issue = window.Demo.session() && window.Demo.sessionIssue();
+    if (issue) window.Demo.endSession(issue);
+    return window.Demo.takeAccessNotice();
+  });
   const timer = React.useRef();
-  const reject = (message, id) => { setError(message); document.getElementById(id)?.focus(); };
+  const reject = (message, field) => { setError(message); setErrorField(field); document.getElementById(field === 'password' ? 'login-password' : 'login-email')?.focus(); };
   React.useEffect(() => () => clearTimeout(timer.current), []);
   const chooseRole = next => {
     if (busy || next === role) return;
     const ids = { admin: 'u3', morador: 'u1', engenheiro: 'u2' };
     setRole(next); setEmail(window.ADM_USERS.find(u => u.id === ids[next])?.email || '');
-    setPassword('demo1234'); setShowPassword(false); setError('');
+    setPassword(window.Demo.examplePassword(ids[next])); setError('');
   };
   const submit = e => {
     e.preventDefault();
     if (busy) return;
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return reject('Informe um e-mail válido.', 'login-email');
-    if (password.length < 8) return reject('Informe uma senha com pelo menos 8 caracteres.', 'login-password');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return reject('Informe um e-mail válido.', 'email');
+    if (password.length < 8) return reject('Informe uma senha com pelo menos 8 caracteres.', 'password');
     setError(''); setBusy(true);
     timer.current = setTimeout(() => {
+      const result = window.Demo.signIn(email, password, role);
+      if (result.error) { setBusy(false); reject(result.error, result.field); return; }
       if (role === 'admin') window.location.href = 'admin.html';
       else if (role === 'engenheiro') window.location.href = 'admin.html?perfil=engenheiro';
       else onLogin();
     }, 700);
   };
+  if (legal) return legal === 'privacy' ? <window.PrivacyScreen onBack={() => setLegal(null)} /> : <window.TermsScreen onBack={() => setLegal(null)} />;
   if (recovery) return <RecoveryScreen initialEmail={email} onBack={() => setRecovery(false)}
-    onReset={(address, newPassword) => { setEmail(address); setPassword(newPassword); setShowPassword(false); setError(''); setRecovery(false); }} />;
+    onReset={(address, newPassword) => { setEmail(address); setPassword(newPassword); setError(''); setRecovery(false); }} />;
   const inputStyle = { width: '100%', minWidth: 0, padding: '14px 12px', border: 0, outline: 'none', background: 'transparent', color: 'var(--ink)' };
   return <window.Screen pad={false}>
+    <div aria-hidden="true" style={{ position: 'sticky', top: 0, zIndex: 40, height: 52, marginBottom: -52, background: 'var(--bg)' }} />
     <div style={{ minHeight: '100%', padding: '80px 24px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 26 }}><window.GMark size={44} /></div>
       <h1 style={{ fontSize: 25, letterSpacing: '-.025em', margin: '0 0 8px' }}>Bem-vindo de volta</h1>
       <p style={{ fontSize: 14, color: 'var(--slate)', lineHeight: 1.5, margin: '0 0 22px' }}>Acesse seus imóveis e projetos técnicos.</p>
+      {notice && <div role="alert" style={{ padding: 16, borderRadius: 14, marginBottom: 20, background: 'var(--orange-100)', color: 'var(--ink)' }}>
+        <strong style={{ display: 'block', fontSize: 15, marginBottom: 6 }}>{notice === 'expired' ? 'Sessão expirada' : notice === 'inactive' ? 'Acesso indisponível' : 'Acesso atualizado'}</strong>
+        <div style={{ fontSize: 13, lineHeight: 1.6 }}>{notice === 'expired' ? 'Sua sessão expirou. Entre novamente para continuar.' : notice === 'inactive' ? 'Esta conta foi desativada ou removida. Entre em contato com a administração.' : 'Seu perfil de acesso foi alterado. Entre novamente para continuar.'}</div>
+      </div>}
       <div role="group" aria-label="Perfil de acesso" style={{ marginBottom: 22 }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--slate)', marginBottom: 8 }}>Perfil de acesso</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1.2fr', gap: 6 }}>
@@ -43,20 +58,21 @@ function LoginScreen({ onLogin }) {
         </div>
       </div>
       <form onSubmit={submit} noValidate>
+        {error && ['account', 'invitation'].includes(errorField) && <div role="alert" style={{ padding: 16, borderRadius: 14, marginBottom: 20, border: '1px solid var(--line)', background: '#fff' }}><strong style={{ display: 'block', fontSize: 15, marginBottom: 6 }}>{errorField === 'invitation' ? 'Aguardando ativação' : 'Conta desativada'}</strong><div style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--slate)' }}>{error}</div></div>}
         <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--slate)', marginBottom: 18 }}>E-mail
-          <div style={{ marginTop: 8, border: '1px solid var(--line)', borderRadius: 14, background: '#fff' }}><input id="login-email" type="email" autoComplete="username" value={email} aria-invalid={!!error && error.includes('e-mail')} aria-describedby={error.includes('e-mail') ? 'login-email-error' : undefined} disabled={busy} onChange={e => { setEmail(e.target.value); setError(''); }} style={inputStyle} /></div>
+          <div style={{ marginTop: 8, border: '1px solid var(--line)', borderRadius: 14, background: '#fff' }}><input id="login-email" type="email" autoComplete="username" value={email} aria-invalid={!!error && ['email', 'credentials'].includes(errorField)} aria-describedby={error && errorField === 'email' ? 'login-email-error' : error && errorField === 'credentials' ? 'login-credentials-error' : undefined} disabled={busy} onChange={e => { setEmail(e.target.value); setError(''); }} style={inputStyle} /></div>
         </label>
-        {error.includes('e-mail') && <p id="login-email-error" role="alert" style={{ marginTop: -10, color: 'var(--red)', fontSize: 13, lineHeight: 1.5 }}>{error}</p>}
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--slate)' }}><label htmlFor="login-password">Senha</label>
-          <div style={{ display: 'flex', alignItems: 'center', marginTop: 8, border: '1px solid var(--line)', borderRadius: 14, background: '#fff' }}>
-            <input id="login-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} aria-invalid={!!error && !error.includes('e-mail')} aria-describedby={error && !error.includes('e-mail') ? 'login-password-error' : undefined} disabled={busy} onChange={e => { setPassword(e.target.value); setError(''); }} style={inputStyle} />
-            <button type="button" aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} aria-pressed={showPassword} disabled={busy} onClick={() => setShowPassword(v => !v)} style={{ display: 'grid', placeItems: 'center', width: 44, minHeight: 44, flexShrink: 0, padding: 8, border: 0, background: 'transparent', color: 'var(--slate)', cursor: 'pointer' }}>{showPassword ? <window.IcEyeOff s={20} /> : <window.IcEye s={20} />}</button>
-          </div>
-        </div>
-        {error && !error.includes('e-mail') && <p id="login-password-error" role="alert" style={{ color: 'var(--red)', fontSize: 13, lineHeight: 1.5 }}>{error}</p>}
+        {error && errorField === 'email' && <p id="login-email-error" role="alert" style={{ marginTop: -10, color: 'var(--red)', fontSize: 13, lineHeight: 1.5 }}>{error}</p>}
+        <window.PasswordInput key={role} id="login-password" label="Senha" autoComplete="current-password" value={password} disabled={busy}
+          onChange={value => { setPassword(value); setError(''); }} invalid={!!error && ['password', 'credentials'].includes(errorField)}
+          describedBy={error && errorField === 'password' ? 'login-password-error' : error && errorField === 'credentials' ? 'login-credentials-error' : undefined} />
+        {error && ['password', 'credentials'].includes(errorField) && <p id={errorField === 'password' ? 'login-password-error' : 'login-credentials-error'} role="alert" style={{ color: 'var(--red)', fontSize: 13, lineHeight: 1.5 }}>{error}</p>}
         <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '8px 0 12px' }}><button type="button" disabled={busy} onClick={() => setRecovery(true)} style={{ padding: '10px 0 10px 12px', background: 'none', border: 0, color: 'var(--slate)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Esqueci minha senha</button></div>
         <window.Btn type="submit" block size="lg" disabled={busy}>{busy ? <><window.Spinner size={18} color="#fff" /> Entrando…</> : 'Entrar'}</window.Btn>
       </form>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
+        {[['privacy', 'Política de privacidade'], ['terms', 'Termos de uso']].map(([key, label]) => <button key={key} type="button" disabled={busy} onClick={() => setLegal(key)} style={{ minHeight: 44, border: 0, background: 'transparent', color: 'var(--slate)', fontSize: 12, lineHeight: 1.5, fontWeight: 600, cursor: 'pointer' }}>{label}</button>)}
+      </div>
     </div>
   </window.Screen>;
 }
@@ -66,7 +82,6 @@ function RecoveryScreen({ initialEmail, onBack, onReset }) {
   const [email, setEmail] = React.useState(initialEmail);
   const [password, setPassword] = React.useState('');
   const [confirm, setConfirm] = React.useState('');
-  const [show, setShow] = React.useState(false);
   const [error, setError] = React.useState('');
   const [busy, setBusy] = React.useState(false);
   const [cooldown, setCooldown] = React.useState(0);
@@ -90,7 +105,7 @@ function RecoveryScreen({ initialEmail, onBack, onReset }) {
     if (password.length < 8) return reject('Use uma senha com pelo menos 8 caracteres.', 'recovery-password');
     if (password !== confirm) return reject('As senhas não coincidem.', 'recovery-confirm');
     setError(''); setBusy(true);
-    timer.current = setTimeout(() => { setBusy(false); setStep('done'); }, 700);
+    timer.current = setTimeout(() => { const result = window.Demo.resetPassword(email, password); setBusy(false); if (result.error) setError(result.error); else setStep('done'); }, 700);
   };
   const fieldStyle = { display: 'block', width: '100%', marginTop: 8, marginBottom: 20, padding: '15px 14px', border: '1px solid var(--line)', borderRadius: 14, background: '#fff', color: 'var(--ink)' };
   return (
@@ -121,11 +136,9 @@ function RecoveryScreen({ initialEmail, onBack, onReset }) {
         <h1 style={{ fontSize: 25 }}>Crie uma nova senha</h1>
         <p style={{ color: 'var(--slate)', fontSize: 14, lineHeight: 1.6 }}>Use pelo menos 8 caracteres para proteger seu acesso.</p>
         <form onSubmit={e => { e.preventDefault(); reset(); }} noValidate>
-          <label style={{ fontSize: 14, fontWeight: 600 }}>Nova senha<input id="recovery-password" type={show ? 'text' : 'password'} autoComplete="new-password" value={password} aria-invalid={error.includes('8 caracteres')} aria-describedby={error.includes('8 caracteres') ? 'recovery-password-error' : undefined} onChange={e => { setPassword(e.target.value); setError(''); }} style={fieldStyle} /></label>
-          {error.includes('8 caracteres') && <p id="recovery-password-error" role="alert" style={{ color: 'var(--red)', fontSize: 13, marginTop: -10 }}>{error}</p>}
-          <label style={{ fontSize: 14, fontWeight: 600 }}>Confirmar nova senha<input id="recovery-confirm" type={show ? 'text' : 'password'} autoComplete="new-password" value={confirm} aria-invalid={error.includes('coincidem')} aria-describedby={error.includes('coincidem') ? 'recovery-confirm-error' : undefined} onChange={e => { setConfirm(e.target.value); setError(''); }} style={fieldStyle} /></label>
-          {error.includes('coincidem') && <p id="recovery-confirm-error" role="alert" style={{ color: 'var(--red)', fontSize: 13, marginTop: -10 }}>{error}</p>}
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, marginBottom: 24 }}><input type="checkbox" checked={show} onChange={e => setShow(e.target.checked)} />Mostrar senhas</label>
+          <window.PasswordInput id="recovery-password" label="Nova senha" value={password} disabled={busy} onChange={value => { setPassword(value); setError(''); }} error={error.includes('8 caracteres') ? error : undefined} style={{ marginBottom: 20 }} />
+          <window.PasswordInput id="recovery-confirm" label="Confirmar nova senha" visibilityLabel="confirmação da nova senha" value={confirm} disabled={busy} onChange={value => { setConfirm(value); setError(''); }} error={error.includes('coincidem') ? error : undefined} style={{ marginBottom: 24 }} />
+          {error && !error.includes('8 caracteres') && !error.includes('coincidem') && <p role="alert" style={{ color: 'var(--red)', fontSize: 13, lineHeight: 1.6 }}>{error}</p>}
           <window.Btn type="submit" block disabled={busy}>{busy ? <><window.Spinner size={18} color="#fff" /> Salvando…</> : 'Salvar nova senha'}</window.Btn>
         </form>
 

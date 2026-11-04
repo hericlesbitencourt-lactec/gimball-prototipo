@@ -9,7 +9,7 @@ const { useState: mState } = React;
 function Page({ title, sub, onBack, right, children, large = true, bottomPad = 96 }) {
   const [sc, setSc] = mState(false);
   return (
-    <window.Screen onScroll={e => setSc(e.target.scrollTop > 10)} pad={false}>
+    <window.Screen onScroll={e => setSc(e.currentTarget.scrollTop > (large ? 56 : 8))} pad={false}>
       <window.NavBar title={title} sub={sub} onBack={onBack} right={right} scrolled={sc} large={large} />
       <div>{children}</div>
       <div style={{ height: bottomPad }} />
@@ -18,7 +18,7 @@ function Page({ title, sub, onBack, right, children, large = true, bottomPad = 9
 }
 
 /* ───────── INÍCIO ───────── */
-function MInicio({ go, push, role = 'admin' }) {
+function MInicio({ go, push, role = 'admin', userId }) {
   const engineer = role === 'engenheiro';
   const plants = window.technicalPlants(role);
   return (
@@ -29,7 +29,7 @@ function MInicio({ go, push, role = 'admin' }) {
           sub={`${window.pendingProfileCount()} ${window.pendingProfileCount() === 1 ? 'solicitação pendente' : 'solicitações pendentes'} · Revisar dados enviados pelos usuários`}
           chevron last onClick={() => push({ key: 'profileRequests' })} />
       </window.Group>}
-      <div style={{ margin: '0 16px' }}><window.ProfileRequestNotice userId={engineer ? 'u2' : 'u3'} onOpen={() => push({ key: 'profile' })} /></div>
+      <div style={{ margin: '0 16px' }}><window.ProfileRequestNotice userId={userId} onOpen={() => push({ key: 'profile' })} /></div>
       <div style={{ padding: '4px 16px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 11, marginBottom: 22 }}>
         {!engineer && <window.Tile label="Usuários" value={window.ADM_USERS.length} sub={`${window.ADM_USERS.filter(u => u.role === "morador").length} moradores`} icon={<window.MIc.users s={18} />} tint="#7A4FB0" bg="#EFE8F8" />}
         <window.Tile label="Imóveis" value={window.ADM_IMOVEIS.length} sub="Imóveis cadastrados" icon={<window.MIc.home s={18} />} tint="var(--orange)" bg="var(--orange-100)" />
@@ -65,10 +65,10 @@ function MUsersList({ push, pop }) {
       {['admin', 'engenheiro', 'morador'].filter(rk => byRole[rk].length).map(rk => (
         <window.Group key={rk} header={labels[rk]}>
           {byRole[rk].map((u, i) => (
-            <window.Row key={u.id} last={i === byRole[rk].length - 1} onClick={() => push({ key: 'userForm', user: u })}
+            <window.Row multiline key={u.id} last={i === byRole[rk].length - 1} onClick={() => push({ key: 'userForm', user: u })}
               left={<window.MAvatar initials={u.initials} role={u.role} size={38} />}
               title={u.name} sub={u.email}
-              trailing={<window.SPill s={u.status} />} chevron />
+              details={<div style={{ marginTop: 7 }}><window.SPill s={u.status} /></div>} chevron />
           ))}
         </window.Group>
       ))}
@@ -79,17 +79,17 @@ function MUsersList({ push, pop }) {
 const Search = window.Search;
 
 /* ───────── USUÁRIO (form/detail) ───────── */
-function MUserForm({ user, pop, toast }) {
+function MUserForm({ user, pop, toast, userId }) {
   const isNew = !user;
   const [name, setName] = mState(user ? user.name : '');
   const [email, setEmail] = mState(user ? user.email : '');
   const [phone, setPhone] = mState(user && user.phone !== '—' ? user.phone : '');
   const [role, setRole] = mState(user ? user.role : 'morador');
-  const [status, setStatus] = mState(user ? user.status : 'active');
+  const [status, setStatus] = mState(user ? user.status : 'invited');
   const [pick, setPick] = mState(null);
   const [linked, setLinked] = mState(() => user?.linked || []);
   const [linkOpen, setLinkOpen] = mState(false);
-  const [createdEmail, setCreatedEmail] = mState(null);
+  const [createdUser, setCreatedUser] = mState(null);
   const { field, validate } = window.useFieldErrors();
 
   const roleLabel = window.ROLE_BADGE[role].label;
@@ -98,17 +98,25 @@ function MUserForm({ user, pop, toast }) {
       Nome: !name.trim() && 'Informe o nome completo.',
       'E-mail': !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? 'Informe um e-mail válido.' : window.ADM_USERS.some(u => u.id !== user?.id && u.email.toLowerCase() === email.trim().toLowerCase()) && 'Este e-mail já está cadastrado.',
     })) return;
-    window.Demo.save('ADM_USERS', user, { name: name.trim(), email: email.trim(), phone, role, status, linked, units: linked.length, initials: name.trim().split(/\s+/).slice(0,2).map(n => n[0]).join('').toUpperCase(), last: 'nunca', ...(isNew ? { confirmationSentAt: new Date().toISOString(), emailConfirmed: false } : {}) });
-    if (isNew) { toast(null); setCreatedEmail(email.trim()); }
-    else { toast('Alterações salvas.'); pop(); }
+    const emailChanged = user && user.email.toLowerCase() !== email.trim().toLowerCase();
+    const saved = window.Demo.save('ADM_USERS', user, { name: name.trim(), email: email.trim(), phone, role, status, linked, units: linked.length, initials: name.trim().split(/\s+/).slice(0,2).map(n => n[0]).join('').toUpperCase(), last: user?.last || 'nunca', ...(isNew ? { emailConfirmed: false } : {}) });
+    if (isNew || (status === 'invited' && emailChanged)) {
+      const result = window.Demo.sendInvitation(saved.id, userId);
+      if (result.error) return toast(result.error);
+      toast(null); setCreatedUser(result.user);
+    } else { toast('Alterações salvas.'); pop(); }
   };
   const unlink = (id) => setLinked(l => l.filter(x => x !== id));
 
-  if (createdEmail) return (
-    <Page large={false} title="Usuário criado" onBack={{ label: 'Usuários', fn: pop }}>
-      <window.EmailNotice title="E-mail de confirmação enviado" email={createdEmail}>
-        <p style={{ fontSize: 14, color: 'var(--slate)', lineHeight: 1.6 }}>O cadastro de <strong>{name.trim()}</strong> foi concluído. O usuário deverá confirmar o endereço de e-mail para concluir a ativação da conta.</p>
-        <p style={{ fontSize: 13, color: 'var(--slate)', lineHeight: 1.6 }}>Se necessário, a opção de reenviar a confirmação estará disponível nas ações da conta.</p>
+  if (createdUser) return (
+    <Page key="invitation-notice" large={false} title={isNew ? 'Usuário criado' : 'Convite de acesso'} onBack={{ label: 'Usuários', fn: pop }}>
+      <window.EmailNotice title="Convite enviado" email={createdUser.email}>
+        {createdUser.invitation.expiresAt <= Date.now() ? <window.Badge color="var(--amber)" bg="var(--amber-100)">Convite expirado</window.Badge> : <window.SPill s={createdUser.status} />}
+        <p style={{ fontSize: 14, color: 'var(--slate)', lineHeight: 1.6 }}><strong>{createdUser.name}</strong> receberá um link para definir a própria senha, confirmar o e-mail e ativar a conta. O convite tem validade de 24 horas.</p>
+        <div style={{ marginTop: 22, padding: 16, borderRadius: 14, background: '#fff', border: '1px solid var(--line)', textAlign: 'left' }}>
+          <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--slate)', lineHeight: 1.6 }}>A tela seguinte será acessada pelo link recebido no e-mail. Use o botão para percorrer essa etapa no protótipo.</p>
+          <window.Btn block variant="dark" onClick={() => { window.location.href = 'index.html?convite=' + encodeURIComponent(createdUser.invitation.token); }}>Simular clique no e-mail</window.Btn>
+        </div>
         <window.Btn block onClick={pop} style={{ marginTop: 24 }}>Concluir</window.Btn>
       </window.EmailNotice>
     </Page>
@@ -153,12 +161,18 @@ function MUserForm({ user, pop, toast }) {
 
       {!isNew && (
         <window.Group header="Ações da conta" footer="A desativação preserva o cadastro e os imóveis vinculados.">
-          <window.Row icon={<window.MIc.user s={18} />} title={status === 'active' ? 'Desativar usuário' : 'Reativar usuário'}
-            confirmation={{ title: status === 'active' ? 'Desativar usuário?' : 'Reativar usuário?', body: status === 'active' ? 'O usuário perderá o acesso ao aplicativo. O cadastro e os imóveis vinculados serão preservados. A alteração do status é aplicada imediatamente.' : 'O usuário poderá acessar o aplicativo novamente. A alteração do status é aplicada imediatamente.', action: status === 'active' ? 'Desativar' : 'Reativar' }}
-            onClick={() => { const next = status === 'active' ? 'inactive' : 'active'; window.Demo.save('ADM_USERS', user, { status: next }); setStatus(next); toast(next === 'inactive' ? 'Usuário desativado.' : 'Usuário reativado.'); }} />
-          <window.Row multiline icon={<window.MIc.bell s={18} />} title="Reenviar e-mail de confirmação" sub={user.email} last
-            confirmation={{ title: 'Reenviar confirmação?', body: 'Reenviar as instruções de confirmação para ' + user.email + '?', action: 'Reenviar confirmação' }}
-            onClick={() => { window.Demo.save('ADM_USERS', user, { confirmationResentAt: new Date().toISOString() }); toast('Instruções de confirmação reenviadas.'); }} />
+          <window.Row multiline icon={<window.MIc.user s={18} />} title={status === 'inactive' ? 'Reativar usuário' : 'Desativar usuário'} last={status === 'inactive'}
+            confirmation={{ title: status === 'inactive' ? 'Reativar usuário?' : 'Desativar usuário?', body: status === 'inactive' ? 'O acesso será restabelecido. Se o usuário ainda não definiu a senha, a conta continuará aguardando ativação pelo convite.' : 'O usuário não poderá acessar nem ativar a conta. O cadastro e os imóveis vinculados serão preservados.', action: status === 'inactive' ? 'Reativar' : 'Desativar' }}
+            onClick={() => { const next = status === 'inactive' ? (user.invitation && !user.invitation.usedAt ? 'invited' : 'active') : 'inactive'; window.Demo.save('ADM_USERS', user, { status: next }); setStatus(next); toast(next === 'inactive' ? 'Usuário desativado.' : 'Usuário reativado.'); }} />
+          {status === 'invited' && <>
+            <window.Row multiline icon={<window.MIc.bell s={18} />} title="Reenviar convite" sub={user.email}
+              confirmation={{ title: 'Reenviar convite?', body: 'Enviar um novo convite para ' + user.email + '? O link anterior deixará de funcionar.', action: 'Reenviar' }}
+              onClick={() => { const result = window.Demo.sendInvitation(user.id, userId); if (result.error) return toast(result.error); toast(null); setCreatedUser(result.user); }} />
+            {user.invitation && <window.Row multiline icon={<window.MIc.link s={18} />} title="Ver convite enviado" sub={user.invitation.expiresAt <= Date.now() ? 'Convite expirado · Reenvie para renovar o acesso' : 'Simular a abertura do link recebido por e-mail'} last onClick={() => { toast(null); setCreatedUser(user); }} />}
+          </>}
+          {status === 'active' && <window.Row multiline icon={<window.MIc.bell s={18} />} title="Enviar recuperação de senha" sub={user.email} last
+            confirmation={{ title: 'Enviar recuperação de senha?', body: 'Enviar instruções para redefinir a senha de ' + user.email + '?', action: 'Enviar' }}
+            onClick={() => { window.Demo.save('ADM_USERS', user, { passwordResetSentAt: new Date().toISOString() }); toast('Instruções de recuperação de senha enviadas.'); }} />}
         </window.Group>
       )}
 

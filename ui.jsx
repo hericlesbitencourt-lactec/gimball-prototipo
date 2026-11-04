@@ -36,7 +36,7 @@ function Btn({ children, variant = 'primary', block, disabled, onClick, icon, st
     opacity: disabled ? 0.5 : 1, transition: 'transform .12s, filter .15s, background .15s',
   };
   const skins = {
-    primary: { background: 'var(--orange)', color: 'var(--ink)', boxShadow: '0 6px 16px rgba(253,120,48,.18)' },
+    primary: { background: 'var(--orange-action)', color: '#fff', boxShadow: '0 6px 16px rgba(196,76,18,.18)' },
     dark:    { background: 'var(--navy-800)', color: '#fff' },
     ghost:   { background: 'transparent', color: 'var(--slate)', border: '1px solid var(--line)' },
     soft:    { background: '#F1F3F6', color: 'var(--ink)' },
@@ -48,6 +48,26 @@ function Btn({ children, variant = 'primary', block, disabled, onClick, icon, st
       {icon}{children}
     </button>
   );
+}
+
+function PasswordInput({ id, label, value, onChange, autoComplete = 'new-password', disabled, error, invalid, describedBy, visibilityLabel, style }) {
+  const [visible, setVisible] = React.useState(false);
+  const generatedId = React.useId();
+  const fieldId = id || generatedId;
+  const target = visibilityLabel || label.toLowerCase();
+  return <div style={style}>
+    <label htmlFor={fieldId} style={{ display: 'block', fontSize: 13, fontWeight: 650, color: 'var(--slate)' }}>{label}</label>
+    <div style={{ display: 'flex', alignItems: 'center', marginTop: 8, border: '1px solid var(--line)', borderRadius: 14, background: '#fff' }}>
+      <input id={fieldId} type={visible ? 'text' : 'password'} autoComplete={autoComplete} value={value} disabled={disabled} onChange={e => onChange(e.target.value)}
+        aria-invalid={error || invalid ? true : undefined} aria-describedby={error ? fieldId + '-error' : describedBy}
+        style={{ flex: 1, width: '100%', minWidth: 0, minHeight: 50, padding: '13px 12px', border: 0, outline: 'none', background: 'transparent', color: 'var(--ink)' }} />
+      <button type="button" aria-label={(visible ? 'Ocultar ' : 'Mostrar ') + target} aria-pressed={visible} disabled={disabled} onClick={() => setVisible(current => !current)}
+        style={{ display: 'grid', placeItems: 'center', width: 44, minHeight: 44, flexShrink: 0, padding: 8, border: 0, background: 'transparent', color: 'var(--slate)', cursor: 'pointer' }}>
+        {visible ? <window.IcEyeOff s={20} /> : <window.IcEye s={20} />}
+      </button>
+    </div>
+    {error && <p id={fieldId + '-error'} role="alert" style={{ margin: '6px 0 0', color: 'var(--red)', fontSize: 12, lineHeight: 1.6 }}>{error}</p>}
+  </div>;
 }
 
 /* status / kind pills */
@@ -164,7 +184,29 @@ function Screen({ children, onScroll, dark, bg, pad = true }) {
   );
 }
 
-function ConfirmModal({ open, title, description, confirmLabel = 'Confirmar', danger = false, onCancel, onConfirm }) {
+function LegalScreen({ onBack, kind = 'privacy' }) {
+  const [scrolled, setScrolled] = React.useState(false);
+  const terms = kind === 'terms';
+  const sections = terms ? ['Acesso à plataforma', 'Uso do aplicativo', 'Responsabilidades', 'Disposições gerais'] : ['Dados pessoais', 'Uso das informações', 'Compartilhamento de dados', 'Contato e direitos'];
+  return <Screen onScroll={e => setScrolled(e.currentTarget.scrollTop > 8)}>
+    <TopBar title={terms ? 'Termos' : 'Privacidade'} onBack={onBack} scrolled={scrolled} />
+    <article style={{ padding: '12px 22px 38px', color: 'var(--ink)' }}>
+      <GMark size={27} />
+      <h1 style={{ margin: '24px 0 12px', fontSize: 27, lineHeight: 1.2, letterSpacing: '-.025em' }}>{terms ? 'Termos de uso' : 'Política de privacidade'}</h1>
+      <Badge color="var(--slate)" bg="#E9EEF4">Conteúdo ilustrativo</Badge>
+      <p style={{ fontSize: 14, lineHeight: 1.8, color: 'var(--slate)', marginTop: 22 }}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer sollicitudin, neque a tincidunt volutpat, ipsum erat consequat lorem, vitae dignissim augue arcu vitae sapien.</p>
+      {sections.map((title, i) => <section key={title} style={{ marginTop: 26 }}>
+        <h2 style={{ fontSize: 17, lineHeight: 1.5, margin: '0 0 10px' }}>{i + 1}. {title}</h2>
+        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.8, color: 'var(--slate)' }}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec feugiat sapien sit amet magna facilisis, vel finibus neque elementum. Sed viverra nibh quis enim malesuada, in consectetur tellus tincidunt. Nulla facilisi. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae.</p>
+      </section>)}
+    </article>
+  </Screen>;
+}
+
+function PrivacyScreen(props) { return <LegalScreen {...props} />; }
+function TermsScreen(props) { return <LegalScreen {...props} kind="terms" />; }
+
+function ConfirmModal({ open, title, description, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', danger = false, onCancel, onConfirm }) {
   const overlay = React.useRef(null);
   const panel = React.useRef(null);
   const titleId = React.useId();
@@ -204,7 +246,7 @@ function ConfirmModal({ open, title, description, confirmLabel = 'Confirmar', da
           <p id={descriptionId} style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: 'var(--slate)', overflowWrap: 'anywhere' }}>{description}</p>
         </div>
         <div style={{ display: 'flex', borderTop: '1px solid var(--line)' }}>
-          <button type="button" onClick={onCancel} style={{ ...buttonStyle, color: 'var(--ink)', borderRight: '1px solid var(--line)' }}>Cancelar</button>
+          <button type="button" onClick={onCancel} style={{ ...buttonStyle, color: 'var(--ink)', borderRight: '1px solid var(--line)' }}>{cancelLabel}</button>
           <button type="button" onClick={onConfirm} style={{ ...buttonStyle, color: danger ? 'var(--red)' : 'var(--orange-600)' }}>{confirmLabel}</button>
         </div>
       </div>
@@ -214,6 +256,32 @@ function ConfirmModal({ open, title, description, confirmLabel = 'Confirmar', da
 
 function LogoutModal(props) {
   return <ConfirmModal {...props} title="Sair do aplicativo?" description="Você voltará para a tela de acesso. Deseja realmente sair?" confirmLabel="Sair" danger />;
+}
+
+function useSessionGuard(active, onEnd) {
+  const callback = React.useRef(onEnd);
+  callback.current = onEnd;
+  React.useEffect(() => {
+    if (!active) return;
+    let timer, ended = false;
+    const check = () => {
+      if (ended) return;
+      clearTimeout(timer);
+      const issue = window.Demo.sessionIssue();
+      if (issue) {
+        ended = true;
+        window.Demo.endSession(issue);
+        callback.current();
+      } else timer = setTimeout(check, Math.min(30000, Math.max(1, window.Demo.session().expiresAt - Date.now())));
+    };
+    check();
+    const stop = () => { ended = true; clearTimeout(timer); };
+    window.addEventListener('demo-session-ended', stop);
+    window.addEventListener('demo-change', check);
+    window.addEventListener('focus', check);
+    document.addEventListener('visibilitychange', check);
+    return () => { clearTimeout(timer); window.removeEventListener('demo-session-ended', stop); window.removeEventListener('demo-change', check); window.removeEventListener('focus', check); document.removeEventListener('visibilitychange', check); };
+  }, [active]);
 }
 
 // Shared by the small forms: errors stay beside their fields and focus follows validation.
@@ -257,5 +325,5 @@ function Toast({ tone = 'ok', children }) {
 
 Object.assign(window, {
   GMark, EmailNotice, Btn, Badge, StatusBadge, KindBadge, Avatar, Spinner, Skel, Card,
-  EmptyState, TopBar, Screen, Toast, ConfirmModal, LogoutModal, useFieldErrors,
+  EmptyState, TopBar, Screen, Toast, ConfirmModal, LogoutModal, useFieldErrors, useSessionGuard, PrivacyScreen, TermsScreen, PasswordInput,
 });

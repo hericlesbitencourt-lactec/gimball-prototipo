@@ -16,7 +16,7 @@ function ProfileRequestNotice({ userId, onOpen }) {
   </window.Card>;
 }
 
-function ProfileScreen({ user, onBack, onSaved }) {
+function ProfileScreen({ user, onBack, onSaved, onPrivacy, onTerms }) {
   const [mode, setMode] = React.useState('view');
   const [name, setName] = React.useState(user?.name || '');
   const [email, setEmail] = React.useState(user?.email || '');
@@ -71,6 +71,9 @@ function ProfileScreen({ user, onBack, onSaved }) {
           {active?.status === 'awaiting_email' && <window.Btn block onClick={() => { setError(''); setMode('email'); }}>Confirmar novo e-mail</window.Btn>}
         </window.Card>}
         {!active && <><p style={{ fontSize: 13, color: 'var(--slate)', lineHeight: 1.6, margin: '18px 2px' }}>Para corrigir seus dados, envie uma solicitação à administração.</p><window.Btn block onClick={openRequest}>Solicitar alteração</window.Btn></>}
+        {(onPrivacy || onTerms) && <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 18 }}>
+          {[[onPrivacy, 'Política de privacidade'], [onTerms, 'Termos de uso']].filter(([action]) => action).map(([action, label]) => <button key={label} type="button" onClick={action} style={{ minHeight: 44, border: 0, background: 'transparent', color: 'var(--slate)', fontSize: 12, lineHeight: 1.5, fontWeight: 600, cursor: 'pointer' }}>{label}</button>)}
+        </div>}
       </> : <form onSubmit={submit} noValidate>
         <p style={{ fontSize: 14, color: 'var(--slate)', lineHeight: 1.6 }}>Informe os novos dados. Seu cadastro só será atualizado após a aprovação da administração.</p>
         <window.Card pad={18}>{field('Nome', name, setName, 'text', 'name')}{field('E-mail', email, setEmail, 'email', 'email')}{field('Telefone', phone, setPhone, 'tel', 'tel')}<label style={{ fontSize: 13, fontWeight: 600, color: 'var(--slate)' }}>Observação (opcional)<textarea value={note} maxLength={500} rows={3} onChange={e => setNote(e.target.value)} style={{ ...fieldStyle, resize: 'vertical', fontFamily: 'inherit', fontSize: 15 }} /></label></window.Card>

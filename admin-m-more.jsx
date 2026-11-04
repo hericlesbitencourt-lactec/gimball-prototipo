@@ -1,10 +1,10 @@
 // admin-m-more.jsx - Mais (menu) · Permissões · Banco de dados (mobile)
 
 /* ───────── MAIS (menu) ───────── */
-function MMais({ push, go, role = 'admin' }) {
+function MMais({ push, go, role = 'admin', userId }) {
   const [confirmLogout, setConfirmLogout] = React.useState(false);
   const engineer = role === 'engenheiro';
-  const user = window.ADM_USERS.find(u => u.id === (engineer ? 'u2' : 'u3'));
+  const user = window.ADM_USERS.find(u => u.id === userId);
   return (
     <window.Page title="Mais" sub={engineer ? 'Engenharia' : 'Administração'}>
       <window.Group header="Conta">
@@ -27,10 +27,15 @@ function MMais({ push, go, role = 'admin' }) {
         <window.Row icon={<window.MIc.cube s={18} />} title="Plantas" chevron last onClick={() => go('plantas')} />
       </window.Group>}
 
+      <window.Group header="Sobre o aplicativo">
+        <window.Row icon={<window.MIc.shield s={18} />} title="Política de privacidade" chevron onClick={() => push({ key: 'privacy' })} />
+        <window.Row icon={<window.MIc.link s={18} />} title="Termos de uso" chevron last onClick={() => push({ key: 'terms' })} />
+      </window.Group>
+
       <window.Group>
         <window.Row icon={<window.MIc.logout s={18} />} iconBg="var(--red-100)" iconColor="var(--red)" title="Sair" danger last onClick={() => setConfirmLogout(true)} />
       </window.Group>
-      <window.LogoutModal open={confirmLogout} onCancel={() => setConfirmLogout(false)} onConfirm={() => { setConfirmLogout(false); window.location.href = 'index.html'; }} />
+      <window.LogoutModal open={confirmLogout} onCancel={() => setConfirmLogout(false)} onConfirm={() => { window.Demo.endSession(); setConfirmLogout(false); window.location.href = 'index.html'; }} />
 
     </window.Page>
   );

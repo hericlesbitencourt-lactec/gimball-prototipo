@@ -119,6 +119,7 @@ const DISC_META = {
   estru: { name: 'Estrutural', tint: '#5A6675', bg: '#ECEEF1' },
 };
 const ADM_STATUS = {
+  invited:      { label: 'Aguardando ativação', color: 'var(--amber)', bg: 'var(--amber-100)' },
   active:       { label: 'Ativo', color: 'var(--green)', bg: 'var(--green-100)' },
   inactive:     { label: 'Inativo', color: 'var(--slate)', bg: '#EEF1F5' },
   delivered:    { label: 'Entregue', color: 'var(--green)', bg: 'var(--green-100)' },

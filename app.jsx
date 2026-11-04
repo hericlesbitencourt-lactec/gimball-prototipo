@@ -27,6 +27,7 @@ function Layer({ screen, role, instant, children }) {
 }
 
 function App() {
+  const invitationToken = new URLSearchParams(window.location.search).get('convite');
   const [authed, setAuthed] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [stack, setStack] = useState([{ key: 'dashboard' }]);
@@ -42,6 +43,7 @@ function App() {
   const toastTimer = React.useRef();
   React.useEffect(() => () => clearTimeout(toastTimer.current), []);
   const [scale, setScale] = useState(1);
+  window.useSessionGuard(authed, () => { setAuthed(false); setConfirmLogout(false); setToast(null); setRoute('login'); setStack([{ key: 'dashboard' }]); });
 
   useEffect(() => {
     const fit = () => setScale(Math.min(1, (window.innerHeight - 44) / 874, (window.innerWidth - 40) / 402));
@@ -77,7 +79,7 @@ function App() {
 
   /* ── navigation actions ── */
   const doLogin = () => { setAuthed(true); setDashState('loading'); setStack([{ key: 'dashboard' }]); setRoute('dashboard'); };
-  const logout = () => { setConfirmLogout(false); setToast(null); setAuthed(false); setRoute('login'); };
+  const logout = () => { window.Demo.endSession(); setConfirmLogout(false); setToast(null); setAuthed(false); setRoute('login'); };
   const openProperty = (propId) => { push({ key: 'property', propId }); setRoute('property'); };
   const openType = (propId, typeId) => { push({ key: 'plans', propId, typeId }); setRoute('plans'); };
   const viewPlant = (propId, typeId, plant) => { setCameraForce(null); push({ key: 'camera', propId, typeId, plant }); setRoute('camera'); };
@@ -87,7 +89,9 @@ function App() {
   const render = (s) => {
     switch (s.key) {
       case 'dashboard': return <window.DashboardScreen user={window.residentUser()} state={dashState} onOpen={openProperty} onLogout={() => setConfirmLogout(true)} onProfile={() => push({ key: 'profile' })} />;
-      case 'profile': return <window.ProfileScreen user={window.ADM_USERS.find(u => u.id === 'u1')} onBack={pop} onSaved={msg => { fireToast('ok', msg); pop(); }} />;
+      case 'profile': return <window.ProfileScreen user={window.Demo.profileUser('morador')} onBack={pop} onSaved={msg => { fireToast('ok', msg); pop(); }} onPrivacy={() => push({ key: 'privacy' })} onTerms={() => push({ key: 'terms' })} />;
+      case 'privacy': return <window.PrivacyScreen onBack={pop} />;
+      case 'terms': return <window.TermsScreen onBack={pop} />;
       case 'property': return <window.PropertyScreen propId={s.propId} onBack={pop} onOpenType={(t) => openType(s.propId, t)} />;
       case 'plans': return <window.PlansScreen propId={s.propId} typeId={s.typeId} onBack={pop}
         onView={(pl) => viewPlant(s.propId, s.typeId, pl)} onToast={fireToast} />;
@@ -125,7 +129,10 @@ function App() {
               </>
             ) : (
               <Layer key="login" screen={{ depth0: true }} role="top" instant={instant}>
-                <window.LoginScreen onLogin={doLogin} />
+                {invitationToken !== null ? <window.FirstAccessScreen token={invitationToken} onLogin={user => {
+                  window.Demo.endSession();
+                  window.location.href = user ? `index.html?perfil=${encodeURIComponent(user.role)}&email=${encodeURIComponent(user.email)}` : 'index.html';
+                }} /> : <window.LoginScreen onLogin={doLogin} />}
               </Layer>
             )}
           </div>

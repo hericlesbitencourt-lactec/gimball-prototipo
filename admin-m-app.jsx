@@ -19,7 +19,8 @@ function ALayer({ depth0, role, instant, children }) {
 
 function AdminMobileApp() {
   const role = new URLSearchParams(window.location.search).get('perfil') === 'engenheiro' ? 'engenheiro' : 'admin';
-  const userId = role === 'engenheiro' ? 'u2' : 'u3';
+  const [userId] = aS(() => window.Demo.enterRole(role)?.id);
+  window.useSessionGuard(true, () => { window.location.replace('index.html'); });
   aE(() => { document.title = role === 'engenheiro' ? 'Gimball — Engenharia' : 'Gimball — Administração'; }, [role]);
   const [tab, setTab] = aS('inicio');
   const [stack, setStack] = aS([{ key: 'inicio' }]);
@@ -55,7 +56,7 @@ function AdminMobileApp() {
   };
 
   const render = (s) => {
-    const P = { push, pop, toast: fireToast, go: switchTab, role };
+    const P = { push, pop, toast: fireToast, go: switchTab, role, userId };
     const access = { profileRequests: 'users.manage', profileRequestReview: 'users.manage', usersList: 'users.view', userForm: 'users.manage', empList: 'empreendimentos.manage', empForm: 'empreendimentos.manage', construtoraList: 'construtoras.manage', construtoraForm: 'construtoras.manage', permList: 'roles.manage', permRole: 'roles.manage', imoveis: 'imoveis.manage', imovelDetail: 'imoveis.manage', imovelForm: 'imoveis.manage', plantaForm: 'plantas.upload' };
     if (role !== 'admin' && ((access[s.key] && !window.PERM_MATRIX[access[s.key]]?.includes(role)) ||
       (['plantaForm', 'camera', 'arview'].includes(s.key) && !window.canViewPlant(s.planta || s.plant, role)))) {
@@ -66,7 +67,9 @@ function AdminMobileApp() {
       case 'imoveis': return <window.MImoveis empId={s.empId} {...P} />;
       case 'plantas': return <window.MPlantas {...P} />;
       case 'mais': return <window.MMais {...P} />;
-      case 'profile': return <window.ProfileScreen user={window.ADM_USERS.find(u => u.id === userId)} onBack={pop} onSaved={msg => { fireToast(msg); pop(); }} />;
+      case 'profile': return <window.ProfileScreen user={window.ADM_USERS.find(u => u.id === userId)} onBack={pop} onSaved={msg => { fireToast(msg); pop(); }} onPrivacy={() => push({ key: 'privacy' })} onTerms={() => push({ key: 'terms' })} />;
+      case 'privacy': return <window.PrivacyScreen onBack={pop} />;
+      case 'terms': return <window.TermsScreen onBack={pop} />;
       case 'profileRequests': return <window.MProfileRequests {...P} />;
       case 'profileRequestReview': return <window.MProfileRequestReview requestId={s.requestId} reviewerId={userId} {...P} />;
       case 'usersList': return <window.MUsersList {...P} />;

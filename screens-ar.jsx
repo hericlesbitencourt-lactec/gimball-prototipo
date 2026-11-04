@@ -93,13 +93,16 @@ function CameraScreen({ plant, propId, typeId, onBack, onAnchored, forceState })
   const [phase, setPhase] = React.useState(forceState || 'searching'); // searching|detected|loading|error
   const [help, setHelp] = React.useState(false);
   const [progress, setProgress] = React.useState(0);
+  const [permission, setPermission] = React.useState(() => sessionStorage.getItem('gimball-camera-permission') || 'prompt');
+  const [permissionModal, setPermissionModal] = React.useState(false);
+  const permissionTitle = React.useRef(null);
   const t = window.projType(typeId);
   const timers = React.useRef([]);
 
   React.useEffect(() => {
     timers.current.forEach(clearTimeout); timers.current = [];
     const add = (fn, ms) => timers.current.push(setTimeout(fn, ms));
-    if (help) return;
+    if (help || permission !== 'granted') return;
     else if (phase === 'detected') add(() => setPhase('loading'), 1150);
     else if (phase === 'loading') {
       setProgress(0);
@@ -108,7 +111,42 @@ function CameraScreen({ plant, propId, typeId, onBack, onAnchored, forceState })
       add(() => onAnchored(), 1700);
     }
     return () => timers.current.forEach(c => { clearTimeout(c); clearInterval(c); });
-  }, [phase, help]);
+  }, [phase, help, permission]);
+
+  React.useEffect(() => { if (permission !== 'granted') permissionTitle.current?.focus({ preventScroll: true }); }, [permission]);
+  const decidePermission = granted => {
+    const next = granted ? 'granted' : 'denied';
+    sessionStorage.setItem('gimball-camera-permission', next);
+    setPermissionModal(false); setPermission(next); setPhase('searching');
+  };
+  if (permission !== 'granted') {
+    const titles = { prompt: 'Permita o acesso à câmera', denied: 'Acesso à câmera não permitido', unavailable: 'Câmera indisponível' };
+    const descriptions = {
+      prompt: 'O acesso à câmera permite localizar o marcador instalado no imóvel e posicionar o projeto no ambiente.',
+      denied: 'Para continuar, revise a permissão da câmera. Você pode voltar às plantas e consultar as informações do projeto.',
+      unavailable: 'Não foi possível iniciar a câmera. Feche outros aplicativos que estejam usando a câmera e tente novamente.',
+    };
+    return <div style={{ position: 'relative', height: '100%', overflow: 'hidden', background: '#0a121c' }}>
+      <ARScene blur={2} />
+      <GlassTop><RoundBtn label="Voltar" icon={<window.IcChevL s={22} />} onClick={onBack} /><div style={{ flex: 1, textAlign: 'center', color: '#fff', fontSize: 14, fontWeight: 700 }}>Prévia AR</div><div style={{ width: 44 }} /></GlassTop>
+      <div style={{ position: 'relative', height: '100%', padding: '120px 18px 36px', overflowY: 'auto', display: 'flex', alignItems: 'safe center' }}>
+        <window.Card style={{ width: '100%', textAlign: 'center', padding: 22 }}>
+          <div style={{ width: 60, height: 60, margin: '0 auto 18px', display: 'grid', placeItems: 'center', borderRadius: 18, color: 'var(--orange-600)', background: 'var(--orange-100)' }}><window.IcScan s={30} /></div>
+          <h1 ref={permissionTitle} tabIndex={-1} style={{ margin: '0 0 12px', fontSize: 23, letterSpacing: '-.02em', color: 'var(--ink)' }}>{titles[permission] || titles.prompt}</h1>
+          <p style={{ margin: '0 0 22px', fontSize: 14, lineHeight: 1.6, color: 'var(--slate)' }}>{descriptions[permission] || descriptions.prompt}</p>
+          <window.Btn block onClick={() => {
+            if (permission === 'unavailable') {
+              setPhase('searching');
+              setPermission(sessionStorage.getItem('gimball-camera-permission') || 'prompt');
+            } else setPermissionModal(true);
+          }}>{permission === 'prompt' ? 'Permitir câmera' : permission === 'denied' ? 'Revisar permissão' : 'Tentar novamente'}</window.Btn>
+          {permission === 'prompt' ? <window.Btn block variant="ghost" style={{ marginTop: 10 }} onClick={() => setPermission('unavailable')}>A câmera não abre</window.Btn> : <window.Btn block variant="ghost" style={{ marginTop: 10 }} onClick={onBack}>Voltar às plantas</window.Btn>}
+        </window.Card>
+      </div>
+      <window.ConfirmModal open={permissionModal} title="Permitir acesso à câmera?" description="O acesso é usado para enquadrar o marcador do imóvel durante a visualização em realidade aumentada."
+        cancelLabel="Agora não" confirmLabel="Permitir" onCancel={() => decidePermission(false)} onConfirm={() => decidePermission(true)} />
+    </div>;
+  }
 
 
   const locked = phase === 'detected' || phase === 'loading';
@@ -206,16 +244,16 @@ function CameraScreen({ plant, propId, typeId, onBack, onAnchored, forceState })
       </div>
       </div>
 
-      {help && <HelpSheet onClose={() => setHelp(false)} />}
+      {help && <HelpSheet onClose={() => setHelp(false)} onUnavailable={() => { setHelp(false); setPermission('unavailable'); }} />}
     </div>
   );
 }
 
-function HelpSheet({ onClose }) {
+function HelpSheet({ onClose, onUnavailable }) {
   return (
     <div onClick={onClose} style={{ position: 'absolute', inset: 0, zIndex: 90, background: 'rgba(5,9,14,.55)',
       display: 'flex', alignItems: 'flex-end', animation: 'fadeUp .2s both' }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: '100%', background: '#fff', borderRadius: '26px 26px 0 0',
+      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxHeight: 'calc(100% - 52px)', overflowY: 'auto', background: '#fff', borderRadius: '26px 26px 0 0',
         padding: '12px 22px 40px', animation: 'toastIn .32s cubic-bezier(.22,1,.36,1) both' }}>
         <div style={{ width: 38, height: 5, borderRadius: 99, background: 'var(--line)', margin: '0 auto 18px' }} />
         <div style={{ display: 'flex', gap: 13, alignItems: 'flex-start', marginBottom: 4 }}>
@@ -233,6 +271,7 @@ function HelpSheet({ onClose }) {
           </div>
         </div>
         <window.Btn block onClick={onClose} variant="dark" style={{ marginTop: 18 }}>Entendi</window.Btn>
+        <window.Btn block onClick={onUnavailable} variant="ghost" style={{ marginTop: 10 }}>A câmera não abre</window.Btn>
       </div>
     </div>
   );
